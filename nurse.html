@@ -28,8 +28,16 @@
   تم تفعيل إشعارات المتصفح ✓ — بتوصلك حتى لو كنتِ بتبويب أو تطبيق ثاني، بشرط يضل المتصفح مفتوح على هالتابلت.
 </div>
 
+<div class="tabs" id="tabs" style="display:none;">
+  <button class="tab-btn active" id="tabCurrent">الطلبات الحالية</button>
+  <button class="tab-btn" id="tabLog">سجل اليوم</button>
+</div>
+
 <div class="request-list" id="requestList" style="display:none;"></div>
 <div class="empty-state" id="emptyState" style="display:none;">لا توجد طلبات حالياً ✓</div>
+
+<div class="request-list" id="logList" style="display:none;"></div>
+<div class="empty-state" id="logEmptyState" style="display:none;">لا يوجد طلبات مسجّلة إلك اليوم بعد</div>
 
 <script type="module" src="nurse.js"></script>
 </body>

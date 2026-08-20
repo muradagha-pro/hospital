@@ -1,7 +1,7 @@
 import { db } from "./firebase-config.js";
 import {
   collection, query, where, orderBy, onSnapshot,
-  doc, runTransaction, updateDoc, serverTimestamp
+  doc, runTransaction, updateDoc, serverTimestamp, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
 const loginCard = document.getElementById("loginCard");
@@ -15,15 +15,20 @@ const emptyState = document.getElementById("emptyState");
 const muteBtn = document.getElementById("muteBtn");
 const notifyBtn = document.getElementById("notifyBtn");
 const notifyBanner = document.getElementById("notifyBanner");
+const tabs = document.getElementById("tabs");
+const tabCurrent = document.getElementById("tabCurrent");
+const tabLog = document.getElementById("tabLog");
+const logList = document.getElementById("logList");
+const logEmptyState = document.getElementById("logEmptyState");
 
 const NAME_KEY = "nurseName";
 const MUTE_KEY = "nurseSoundMuted";
 let myName = localStorage.getItem(NAME_KEY);
 let isMuted = localStorage.getItem(MUTE_KEY) === "true";
 let knownRequestIds = new Set(); // لتفادي تكرار إشعار المتصفح لنفس الطلب
+let logUnsubscribe = null;
 
 // -------- الصوت: جرس يتكرر لين الاستلام --------
-// نستخدم Web Audio API مباشرة (بدون ملف صوت خارجي)
 let audioCtx = null;
 let alarmTimer = null;
 
@@ -48,7 +53,6 @@ function playBeep() {
   osc.start();
   osc.stop(audioCtx.currentTime + 0.4);
 
-  // نغمة ثانية بعد ثانية قصيرة (جرس مزدوج، أوضح للانتباه)
   setTimeout(() => {
     if (isMuted || !audioCtx) return;
     const osc2 = audioCtx.createOscillator();
@@ -68,7 +72,7 @@ function playBeep() {
 function vibrateAlert() {
   if (isMuted) return;
   if ("vibrate" in navigator) {
-    navigator.vibrate([300, 100, 300]); // اهتزاز - وقفة - اهتزاز
+    navigator.vibrate([300, 100, 300]);
   }
 }
 
@@ -85,7 +89,7 @@ function startAlarm() {
 function stopAlarm() {
   clearInterval(alarmTimer);
   alarmTimer = null;
-  if ("vibrate" in navigator) navigator.vibrate(0); // إيقاف أي اهتزاز مستمر
+  if ("vibrate" in navigator) navigator.vibrate(0);
 }
 
 updateMuteButton();
@@ -141,7 +145,7 @@ loginBtn.addEventListener("click", () => {
   if (!val) { alert("الرجاء إدخال الاسم"); return; }
   myName = val;
   localStorage.setItem(NAME_KEY, myName);
-  unlockAudio(); // ضغطة "دخول" هي التفاعل اللي بيسمح للمتصفح بتشغيل صوت لاحقاً
+  unlockAudio();
   showDashboard();
 });
 
@@ -158,18 +162,44 @@ if (Notification && Notification.permission === "granted") {
 function showLogin() {
   loginCard.style.display = "block";
   nurseHeader.style.display = "none";
+  tabs.style.display = "none";
   requestList.style.display = "none";
   emptyState.style.display = "none";
+  logList.style.display = "none";
+  logEmptyState.style.display = "none";
 }
 
 function showDashboard() {
   loginCard.style.display = "none";
   nurseHeader.style.display = "flex";
-  requestList.style.display = "flex";
+  tabs.style.display = "flex";
   nurseNameEl.textContent = myName;
   listenForRequests();
+  switchTab("current");
 }
 
+// -------- التبديل بين "الطلبات الحالية" و "سجل اليوم" --------
+tabCurrent.addEventListener("click", () => switchTab("current"));
+tabLog.addEventListener("click", () => switchTab("log"));
+
+function switchTab(which) {
+  tabCurrent.classList.toggle("active", which === "current");
+  tabLog.classList.toggle("active", which === "log");
+
+  if (which === "current") {
+    requestList.style.display = "flex";
+    logList.style.display = "none";
+    logEmptyState.style.display = "none";
+    if (logUnsubscribe) { logUnsubscribe(); logUnsubscribe = null; }
+  } else {
+    requestList.style.display = "none";
+    emptyState.style.display = "none";
+    logList.style.display = "flex";
+    listenForTodayLog();
+  }
+}
+
+// -------- الطلبات الحالية (مباشرة) --------
 function listenForRequests() {
   const q = query(
     collection(db, "callRequests"),
@@ -181,7 +211,7 @@ function listenForRequests() {
     requestList.innerHTML = "";
 
     if (snapshot.empty) {
-      emptyState.style.display = "block";
+      emptyState.style.display = tabCurrent.classList.contains("active") ? "block" : "none";
       stopAlarm();
       return;
     }
@@ -266,16 +296,113 @@ async function acceptRequest(id) {
   }
 }
 
+// عند إنهاء التنفيذ، تقدر الممرضة تضيف ملاحظة اختيارية فوراً
 async function completeRequest(id) {
+  const note = prompt("ملاحظة اختيارية عن الطلب (اتركيها فارغة إذا ما في ملاحظة):", "");
+  if (note === null) return; // ضغطت إلغاء
+
   const ref = doc(db, "callRequests", id);
   try {
     await updateDoc(ref, {
       status: "done",
       doneAt: serverTimestamp(),
+      note: note.trim(),
     });
   } catch (err) {
     alert("تعذر تحديث حالة الطلب");
   }
+}
+
+// -------- سجل اليوم (كل الطلبات التي استلمتها هذه الممرضة اليوم) --------
+function listenForTodayLog() {
+  if (logUnsubscribe) { logUnsubscribe(); logUnsubscribe = null; }
+
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const startTimestamp = Timestamp.fromDate(startOfToday);
+
+  const q = query(
+    collection(db, "callRequests"),
+    where("receivedBy", "==", myName),
+    where("createdAt", ">=", startTimestamp),
+    orderBy("createdAt", "desc")
+  );
+
+  logUnsubscribe = onSnapshot(q, (snapshot) => {
+    logList.innerHTML = "";
+
+    if (snapshot.empty) {
+      logEmptyState.style.display = "block";
+      return;
+    }
+    logEmptyState.style.display = "none";
+
+    snapshot.forEach((docSnap) => {
+      logList.appendChild(buildLogCard(docSnap.id, docSnap.data()));
+    });
+  });
+}
+
+function buildLogCard(id, data) {
+  const card = document.createElement("div");
+  card.className = "request-card mine";
+  card.style.flexDirection = "column";
+  card.style.alignItems = "stretch";
+
+  const timeLabel = data.createdAt
+    ? data.createdAt.toDate().toLocaleTimeString("ar", { hour: "2-digit", minute: "2-digit" })
+    : "";
+
+  const statusLabel = data.status === "done" ? "تم التنفيذ" : data.status === "received" ? "قيد التنفيذ" : "طلب جديد";
+
+  const top = document.createElement("div");
+  top.style.display = "flex";
+  top.style.justifyContent = "space-between";
+  top.style.alignItems = "center";
+  top.innerHTML = `
+    <div>
+      <div class="request-room">غرفة ${data.room}</div>
+      <div class="request-meta">
+        <span class="badge ${data.status}">${statusLabel}</span>
+        &nbsp;الساعة ${timeLabel}
+      </div>
+    </div>
+  `;
+
+  const noteBtn = document.createElement("button");
+  noteBtn.className = "note-btn";
+  noteBtn.textContent = data.note ? "تعديل الملاحظة" : "إضافة ملاحظة";
+  noteBtn.onclick = () => editNote(id, data.note || "");
+  top.appendChild(noteBtn);
+
+  card.appendChild(top);
+
+  if (data.note) {
+    const noteBox = document.createElement("div");
+    noteBox.className = "request-note";
+    noteBox.innerHTML = `<span class="note-label">ملاحظة:</span>${escapeHtml(data.note)}`;
+    card.appendChild(noteBox);
+  }
+
+  return card;
+}
+
+async function editNote(id, currentNote) {
+  const note = prompt("تعديل ملاحظة الطلب:", currentNote);
+  if (note === null) return;
+
+  const ref = doc(db, "callRequests", id);
+  try {
+    await updateDoc(ref, { note: note.trim() });
+  } catch (err) {
+    alert("تعذر حفظ الملاحظة");
+  }
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
 }
 
 function timeAgo(date) {
