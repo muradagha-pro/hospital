@@ -65,15 +65,27 @@ function playBeep() {
   }, 220);
 }
 
+function vibrateAlert() {
+  if (isMuted) return;
+  if ("vibrate" in navigator) {
+    navigator.vibrate([300, 100, 300]); // اهتزاز - وقفة - اهتزاز
+  }
+}
+
 function startAlarm() {
   if (alarmTimer) return;
   playBeep();
-  alarmTimer = setInterval(playBeep, 4000);
+  vibrateAlert();
+  alarmTimer = setInterval(() => {
+    playBeep();
+    vibrateAlert();
+  }, 4000);
 }
 
 function stopAlarm() {
   clearInterval(alarmTimer);
   alarmTimer = null;
+  if ("vibrate" in navigator) navigator.vibrate(0); // إيقاف أي اهتزاز مستمر
 }
 
 updateMuteButton();
@@ -112,6 +124,7 @@ function maybeSendBrowserNotification(room) {
     new Notification("طلب استدعاء جديد", {
       body: `غرفة ${room} تحتاج مساعدة`,
       tag: `room-${room}-${Date.now()}`,
+      vibrate: [300, 100, 300, 100, 300],
     });
   }
 }
