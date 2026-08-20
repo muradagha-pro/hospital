@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>لوحة الممرضة</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="login-card" id="loginCard">
+  <h1>تسجيل الدخول</h1>
+  <p class="subtitle" style="margin-bottom:0;">أدخلي اسمك لعرض طلبات المرضى</p>
+  <input type="text" id="nameInput" placeholder="اسم الممرضة">
+  <button id="loginBtn">دخول</button>
+</div>
+
+<div class="nurse-header" id="nurseHeader" style="display:none;">
+  <div class="nurse-name" id="nurseName"></div>
+  <div class="header-controls">
+    <button class="icon-toggle" id="muteBtn" title="كتم صوت الجرس">🔔</button>
+    <button class="change-name" id="notifyBtn">تفعيل إشعارات المتصفح</button>
+    <button class="change-name" id="changeNameBtn">تغيير الاسم</button>
+  </div>
+</div>
+
+<div class="banner" id="notifyBanner" style="display:none;">
+  تم تفعيل إشعارات المتصفح ✓ — بتوصلك حتى لو كنتِ بتبويب أو تطبيق ثاني، بشرط يضل المتصفح مفتوح على هالتابلت.
+</div>
+
+<div class="request-list" id="requestList" style="display:none;"></div>
+<div class="empty-state" id="emptyState" style="display:none;">لا توجد طلبات حالياً ✓</div>
+
+<script type="module" src="nurse.js"></script>
+</body>
+</html>

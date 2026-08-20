@@ -1,0 +1,273 @@
+import { db } from "./firebase-config.js";
+import {
+  collection, query, where, orderBy, onSnapshot,
+  doc, runTransaction, updateDoc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+const loginCard = document.getElementById("loginCard");
+const nameInput = document.getElementById("nameInput");
+const loginBtn = document.getElementById("loginBtn");
+const nurseHeader = document.getElementById("nurseHeader");
+const nurseNameEl = document.getElementById("nurseName");
+const changeNameBtn = document.getElementById("changeNameBtn");
+const requestList = document.getElementById("requestList");
+const emptyState = document.getElementById("emptyState");
+const muteBtn = document.getElementById("muteBtn");
+const notifyBtn = document.getElementById("notifyBtn");
+const notifyBanner = document.getElementById("notifyBanner");
+
+const NAME_KEY = "nurseName";
+const MUTE_KEY = "nurseSoundMuted";
+let myName = localStorage.getItem(NAME_KEY);
+let isMuted = localStorage.getItem(MUTE_KEY) === "true";
+let knownRequestIds = new Set(); // لتفادي تكرار إشعار المتصفح لنفس الطلب
+
+// -------- الصوت: جرس يتكرر لين الاستلام --------
+// نستخدم Web Audio API مباشرة (بدون ملف صوت خارجي)
+let audioCtx = null;
+let alarmTimer = null;
+
+function unlockAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === "suspended") audioCtx.resume();
+}
+
+function playBeep() {
+  if (isMuted || !audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = "sine";
+  osc.frequency.value = 880;
+  gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.3, audioCtx.currentTime + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.35);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.4);
+
+  // نغمة ثانية بعد ثانية قصيرة (جرس مزدوج، أوضح للانتباه)
+  setTimeout(() => {
+    if (isMuted || !audioCtx) return;
+    const osc2 = audioCtx.createOscillator();
+    const gain2 = audioCtx.createGain();
+    osc2.type = "sine";
+    osc2.frequency.value = 1046;
+    gain2.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+    gain2.gain.exponentialRampToValueAtTime(0.3, audioCtx.currentTime + 0.02);
+    gain2.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.35);
+    osc2.connect(gain2);
+    gain2.connect(audioCtx.destination);
+    osc2.start();
+    osc2.stop(audioCtx.currentTime + 0.4);
+  }, 220);
+}
+
+function startAlarm() {
+  if (alarmTimer) return;
+  playBeep();
+  alarmTimer = setInterval(playBeep, 4000);
+}
+
+function stopAlarm() {
+  clearInterval(alarmTimer);
+  alarmTimer = null;
+}
+
+updateMuteButton();
+
+muteBtn.addEventListener("click", () => {
+  isMuted = !isMuted;
+  localStorage.setItem(MUTE_KEY, String(isMuted));
+  updateMuteButton();
+});
+
+function updateMuteButton() {
+  muteBtn.textContent = isMuted ? "🔕" : "🔔";
+  muteBtn.classList.toggle("muted", isMuted);
+  muteBtn.title = isMuted ? "تفعيل صوت الجرس" : "كتم صوت الجرس";
+}
+
+// -------- إشعارات المتصفح (اختياري) --------
+notifyBtn.addEventListener("click", async () => {
+  if (!("Notification" in window)) {
+    alert("هذا المتصفح لا يدعم إشعارات النظام");
+    return;
+  }
+  const permission = await Notification.requestPermission();
+  if (permission === "granted") {
+    notifyBanner.style.display = "block";
+    notifyBtn.textContent = "الإشعارات مفعّلة ✓";
+    notifyBtn.disabled = true;
+    new Notification("تم تفعيل إشعارات نظام استدعاء الممرضة ✓");
+  } else {
+    alert("لم يتم منح إذن الإشعارات. يمكنك تفعيلها لاحقاً من إعدادات المتصفح.");
+  }
+});
+
+function maybeSendBrowserNotification(room) {
+  if ("Notification" in window && Notification.permission === "granted") {
+    new Notification("طلب استدعاء جديد", {
+      body: `غرفة ${room} تحتاج مساعدة`,
+      tag: `room-${room}-${Date.now()}`,
+    });
+  }
+}
+
+// -------- تسجيل الدخول --------
+if (myName) {
+  showDashboard();
+} else {
+  showLogin();
+}
+
+loginBtn.addEventListener("click", () => {
+  const val = nameInput.value.trim();
+  if (!val) { alert("الرجاء إدخال الاسم"); return; }
+  myName = val;
+  localStorage.setItem(NAME_KEY, myName);
+  unlockAudio(); // ضغطة "دخول" هي التفاعل اللي بيسمح للمتصفح بتشغيل صوت لاحقاً
+  showDashboard();
+});
+
+changeNameBtn.addEventListener("click", () => {
+  localStorage.removeItem(NAME_KEY);
+  location.reload();
+});
+
+if (Notification && Notification.permission === "granted") {
+  notifyBtn.textContent = "الإشعارات مفعّلة ✓";
+  notifyBtn.disabled = true;
+}
+
+function showLogin() {
+  loginCard.style.display = "block";
+  nurseHeader.style.display = "none";
+  requestList.style.display = "none";
+  emptyState.style.display = "none";
+}
+
+function showDashboard() {
+  loginCard.style.display = "none";
+  nurseHeader.style.display = "flex";
+  requestList.style.display = "flex";
+  nurseNameEl.textContent = myName;
+  listenForRequests();
+}
+
+function listenForRequests() {
+  const q = query(
+    collection(db, "callRequests"),
+    where("status", "in", ["sent", "received"]),
+    orderBy("createdAt", "asc")
+  );
+
+  onSnapshot(q, (snapshot) => {
+    requestList.innerHTML = "";
+
+    if (snapshot.empty) {
+      emptyState.style.display = "block";
+      stopAlarm();
+      return;
+    }
+    emptyState.style.display = "none";
+
+    let pendingCount = 0;
+
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      requestList.appendChild(buildCard(docSnap.id, data));
+
+      if (data.status === "sent") {
+        pendingCount++;
+        if (!knownRequestIds.has(docSnap.id)) {
+          maybeSendBrowserNotification(data.room);
+        }
+      }
+      knownRequestIds.add(docSnap.id);
+    });
+
+    if (pendingCount > 0) startAlarm();
+    else stopAlarm();
+  });
+}
+
+function buildCard(id, data) {
+  const card = document.createElement("div");
+  card.className = "request-card" + (data.receivedBy === myName ? " mine" : "");
+
+  const isMine = data.receivedBy === myName;
+  const timeText = data.createdAt ? timeAgo(data.createdAt.toDate()) : "الآن";
+
+  card.innerHTML = `
+    <div>
+      <div class="request-room">غرفة ${data.room}</div>
+      <div class="request-meta">
+        <span class="badge ${data.status}">${data.status === "sent" ? "طلب جديد" : "قيد التنفيذ"}</span>
+        &nbsp;${timeText}
+        ${data.receivedBy ? `&nbsp;· بواسطة ${data.receivedBy}` : ""}
+      </div>
+    </div>
+  `;
+
+  const actionSlot = document.createElement("div");
+
+  if (data.status === "sent") {
+    const btn = document.createElement("button");
+    btn.className = "action-btn";
+    btn.textContent = "استلام الطلب";
+    btn.onclick = () => acceptRequest(id);
+    actionSlot.appendChild(btn);
+  } else if (data.status === "received" && isMine) {
+    const btn = document.createElement("button");
+    btn.className = "action-btn done-btn";
+    btn.textContent = "تم التنفيذ";
+    btn.onclick = () => completeRequest(id);
+    actionSlot.appendChild(btn);
+  }
+
+  card.appendChild(actionSlot);
+  return card;
+}
+
+// معاملة (transaction) تمنع استلام نفس الطلب من أكثر من ممرضة بنفس اللحظة
+async function acceptRequest(id) {
+  const ref = doc(db, "callRequests", id);
+  try {
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists()) throw new Error("الطلب لم يعد موجوداً");
+      if (snap.data().status !== "sent") {
+        throw new Error("تم استلام هذا الطلب من ممرضة أخرى بالفعل");
+      }
+      tx.update(ref, {
+        status: "received",
+        receivedBy: myName,
+        receivedAt: serverTimestamp(),
+      });
+    });
+  } catch (err) {
+    alert(err.message || "تعذر استلام الطلب");
+  }
+}
+
+async function completeRequest(id) {
+  const ref = doc(db, "callRequests", id);
+  try {
+    await updateDoc(ref, {
+      status: "done",
+      doneAt: serverTimestamp(),
+    });
+  } catch (err) {
+    alert("تعذر تحديث حالة الطلب");
+  }
+}
+
+function timeAgo(date) {
+  const seconds = Math.floor((new Date() - date) / 1000);
+  if (seconds < 60) return "الآن";
+  const minutes = Math.floor(seconds / 60);
+  return `منذ ${minutes} ${minutes === 1 ? "دقيقة" : "دقائق"}`;
+}
