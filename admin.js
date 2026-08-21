@@ -1,5 +1,14 @@
 import { db } from "./firebase-config.js";
 import {
+  collection,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  Timestamp
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+import {
   collection, query, where, orderBy, onSnapshot, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 import { DEPARTMENTS } from "./departments.js";
@@ -16,6 +25,9 @@ const statAvgTime = document.getElementById("statAvgTime");
 const deptBreakdown = document.getElementById("deptBreakdown");
 const commentsList = document.getElementById("commentsList");
 const commentsEmpty = document.getElementById("commentsEmpty");
+
+const feedbackList = document.getElementById("feedbackList");
+const feedbackEmpty = document.getElementById("feedbackEmpty");
 
 let unsubscribe = null;
 let currentRange = "today";
@@ -219,7 +231,72 @@ function buildDeptDetail(deptRequests) {
 
   return wrap;
 }
+// =====================================================
+// الشكاوى والاقتراحات
+// =====================================================
 
+listenForFeedbacks();
+
+function listenForFeedbacks() {
+
+  const q = query(
+    collection(db, "feedbacks"),
+    orderBy("createdAt", "desc")
+  );
+
+  onSnapshot(q, (snapshot) => {
+
+    feedbackList.innerHTML = "";
+
+    if (snapshot.empty) {
+      feedbackEmpty.style.display = "block";
+      return;
+    }
+
+    feedbackEmpty.style.display = "none";
+
+    snapshot.forEach((docSnap) => {
+
+      const data = docSnap.data();
+
+      const time =
+        data.createdAt
+          ? data.createdAt.toDate().toLocaleString("ar", {
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit"
+            })
+          : "";
+
+      const item = document.createElement("div");
+
+      item.className = "comment-item";
+
+      item.innerHTML = `
+        <div class="comment-meta">
+          غرفة ${escapeHtml(String(data.room || ""))}
+          ·
+          ${data.type === "complaint" ? "شكوى" : "اقتراح"}
+          ·
+          ${time}
+        </div>
+
+        <div class="comment-text">
+          <strong>${escapeHtml(data.title || "")}</strong>
+        </div>
+
+        <div class="comment-text" style="margin-top:8px;">
+          ${escapeHtml(data.message || "")}
+        </div>
+      `;
+
+      feedbackList.appendChild(item);
+    });
+
+  });
+
+}
 function formatMinutes(minutes) {
   if (minutes < 1) return `${Math.round(minutes * 60)} ثانية`;
   return `${minutes.toFixed(1)} دقيقة`;
