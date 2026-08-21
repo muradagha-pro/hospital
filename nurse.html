@@ -21,10 +21,18 @@
     <div class="nurse-dept" id="nurseDept"></div>
   </div>
   <div class="header-controls">
-    <button class="icon-toggle" id="muteBtn" title="كتم صوت الجرس">🔔</button>
+    <select id="alertModeSelect" class="alert-select">
+      <option value="full">صوت واهتزاز</option>
+      <option value="vibrate">اهتزاز فقط</option>
+      <option value="off">إيقاف التنبيهات</option>
+    </select>
     <button class="change-name" id="notifyBtn">تفعيل إشعارات المتصفح</button>
     <button class="change-name" id="changeNameBtn">تغيير الاسم</button>
   </div>
+</div>
+
+<div class="banner" id="soundHint" style="display:none;">
+  🔈 لتفعيل صوت التنبيه، اضغط بأي مكان بالشاشة مرة واحدة (قيد أمان من المتصفح نفسه).
 </div>
 
 <div class="banner" id="notifyBanner" style="display:none;">

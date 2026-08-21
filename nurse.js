@@ -16,9 +16,10 @@ const nurseDeptEl = document.getElementById("nurseDept");
 const changeNameBtn = document.getElementById("changeNameBtn");
 const requestList = document.getElementById("requestList");
 const emptyState = document.getElementById("emptyState");
-const muteBtn = document.getElementById("muteBtn");
+const alertModeSelect = document.getElementById("alertModeSelect");
 const notifyBtn = document.getElementById("notifyBtn");
 const notifyBanner = document.getElementById("notifyBanner");
+const soundHint = document.getElementById("soundHint");
 const tabs = document.getElementById("tabs");
 const tabCurrent = document.getElementById("tabCurrent");
 const tabLog = document.getElementById("tabLog");
@@ -27,26 +28,26 @@ const logEmptyState = document.getElementById("logEmptyState");
 
 const NAME_KEY = "nurseName";
 const DEPT_KEY = "nurseDept";
-const MUTE_KEY = "nurseSoundMuted";
+const ALERT_MODE_KEY = "nurseAlertMode"; // "full" | "vibrate" | "off"
 
 let myName = localStorage.getItem(NAME_KEY);
 
 // -------- تحديد القسم: من رابط QR الخاص بمحطة القسم فقط --------
-// كل قسم إله رابط QR ثابت خاص فيه، مثال: nurse.html?dept=internal
 const urlParams = new URLSearchParams(window.location.search);
 const deptFromUrl = urlParams.get("dept");
 let myDept = deptFromUrl || localStorage.getItem(DEPT_KEY) || "";
 
-let isMuted = localStorage.getItem(MUTE_KEY) === "true";
+let alertMode = localStorage.getItem(ALERT_MODE_KEY) || "full";
 let knownRequestIds = new Set();
 let logUnsubscribe = null;
 let currentUnsubscribe = null;
+let audioUnlocked = false;
 
 if (deptFromUrl) localStorage.setItem(DEPT_KEY, deptFromUrl);
 
 if (myDept) {
   loginTitle.textContent = `تسجيل الدخول — قسم ${departmentName(myDept)}`;
-  loginSubtitle.textContent = "أدخلي اسمك للدخول";
+  loginSubtitle.textContent = "أدخل اسمك للدخول";
   nameInput.style.display = "block";
   loginBtnVisible(true);
 } else {
@@ -60,25 +61,46 @@ function loginBtnVisible(visible) {
   document.getElementById("loginBtn").style.display = visible ? "block" : "none";
 }
 
-// -------- الصوت: جرس يتكرر لين الاستلام --------
+// =====================================================================
+// الصوت والاهتزاز
+// =====================================================================
+// ملاحظة مهمة: المتصفحات تمنع تشغيل الصوت تلقائياً قبل أي "لمسة" فعلية
+// من المستخدم على الصفحة. لذلك نستمع لأول لمسة/ضغطة بأي مكان بالصفحة
+// (مو بس زر الدخول) ونفتح مجرى الصوت فيها. هيك حتى لو الاسم محفوظ من
+// قبل ودخلت الممرضة مباشرة على لوحتها، أول لمسة إلها بتفعّل الصوت.
 let audioCtx = null;
-let alarmTimer = null;
 
 function unlockAudio() {
-  if (!audioCtx) {
+  if (audioUnlocked) return;
+  try {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    audioUnlocked = true;
+    soundHint.style.display = "none";
+  } catch (e) {
+    console.warn("تعذر تفعيل الصوت", e);
   }
-  if (audioCtx.state === "suspended") audioCtx.resume();
 }
 
+["click", "touchstart", "keydown"].forEach((evt) => {
+  document.addEventListener(evt, unlockAudio, { once: true, passive: true });
+});
+
+// بعض المتصفحات بتوقف مجرى الصوت لما تختفي الصفحة عن الشاشة، نعيد تفعيله لما ترجع
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && audioCtx && audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
+});
+
 function playBeep() {
-  if (isMuted || !audioCtx) return;
+  if (alertMode !== "full" || !audioCtx) return;
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   osc.type = "sine";
   osc.frequency.value = 880;
   gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.3, audioCtx.currentTime + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.35, audioCtx.currentTime + 0.02);
   gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.35);
   osc.connect(gain);
   gain.connect(audioCtx.destination);
@@ -86,13 +108,13 @@ function playBeep() {
   osc.stop(audioCtx.currentTime + 0.4);
 
   setTimeout(() => {
-    if (isMuted || !audioCtx) return;
+    if (alertMode !== "full" || !audioCtx) return;
     const osc2 = audioCtx.createOscillator();
     const gain2 = audioCtx.createGain();
     osc2.type = "sine";
     osc2.frequency.value = 1046;
     gain2.gain.setValueAtTime(0.0001, audioCtx.currentTime);
-    gain2.gain.exponentialRampToValueAtTime(0.3, audioCtx.currentTime + 0.02);
+    gain2.gain.exponentialRampToValueAtTime(0.35, audioCtx.currentTime + 0.02);
     gain2.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.35);
     osc2.connect(gain2);
     gain2.connect(audioCtx.destination);
@@ -102,11 +124,13 @@ function playBeep() {
 }
 
 function vibrateAlert() {
-  if (isMuted) return;
+  if (alertMode === "off") return;
   if ("vibrate" in navigator) {
     navigator.vibrate([300, 100, 300]);
   }
 }
+
+let alarmTimer = null;
 
 function startAlarm() {
   if (alarmTimer) return;
@@ -124,21 +148,13 @@ function stopAlarm() {
   if ("vibrate" in navigator) navigator.vibrate(0);
 }
 
-updateMuteButton();
-
-muteBtn.addEventListener("click", () => {
-  isMuted = !isMuted;
-  localStorage.setItem(MUTE_KEY, String(isMuted));
-  updateMuteButton();
+alertModeSelect.value = alertMode;
+alertModeSelect.addEventListener("change", () => {
+  alertMode = alertModeSelect.value;
+  localStorage.setItem(ALERT_MODE_KEY, alertMode);
 });
 
-function updateMuteButton() {
-  muteBtn.textContent = isMuted ? "🔕" : "🔔";
-  muteBtn.classList.toggle("muted", isMuted);
-  muteBtn.title = isMuted ? "تفعيل صوت الجرس" : "كتم صوت الجرس";
-}
-
-// -------- إشعارات المتصفح (اختياري) --------
+// -------- إشعارات المتصفح (اختياري، لتوصيل التنبيه حتى لو التبويب مو أمامها) --------
 notifyBtn.addEventListener("click", async () => {
   if (!("Notification" in window)) {
     alert("هذا المتصفح لا يدعم إشعارات النظام");
@@ -156,6 +172,7 @@ notifyBtn.addEventListener("click", async () => {
 });
 
 function maybeSendBrowserNotification(room) {
+  if (alertMode === "off") return;
   if ("Notification" in window && Notification.permission === "granted") {
     new Notification("طلب استدعاء جديد", {
       body: `غرفة ${room} تحتاج مساعدة`,
@@ -163,6 +180,11 @@ function maybeSendBrowserNotification(room) {
       vibrate: [300, 100, 300, 100, 300],
     });
   }
+}
+
+if (Notification && Notification.permission === "granted") {
+  notifyBtn.textContent = "الإشعارات مفعّلة ✓";
+  notifyBtn.disabled = true;
 }
 
 // -------- تسجيل الدخول --------
@@ -179,7 +201,6 @@ loginBtn.addEventListener("click", () => {
 
   myName = val;
   localStorage.setItem(NAME_KEY, myName);
-  unlockAudio();
   showDashboard();
 });
 
@@ -188,11 +209,6 @@ changeNameBtn.addEventListener("click", () => {
   localStorage.removeItem(DEPT_KEY);
   location.reload();
 });
-
-if (Notification && Notification.permission === "granted") {
-  notifyBtn.textContent = "الإشعارات مفعّلة ✓";
-  notifyBtn.disabled = true;
-}
 
 function showLogin() {
   loginCard.style.display = "block";
@@ -210,6 +226,7 @@ function showDashboard() {
   tabs.style.display = "flex";
   nurseNameEl.textContent = myName;
   nurseDeptEl.textContent = `قسم ${departmentName(myDept)}`;
+  if (!audioUnlocked) soundHint.style.display = "block";
   listenForRequests();
   switchTab("current");
 }
@@ -293,6 +310,10 @@ function buildCard(id, data) {
   `;
 
   const actionSlot = document.createElement("div");
+  actionSlot.style.display = "flex";
+  actionSlot.style.gap = "8px";
+  actionSlot.style.flexWrap = "wrap";
+  actionSlot.style.justifyContent = "flex-end";
 
   if (data.status === "sent") {
     const btn = document.createElement("button");
@@ -301,11 +322,21 @@ function buildCard(id, data) {
     btn.onclick = () => acceptRequest(id);
     actionSlot.appendChild(btn);
   } else if (data.status === "received" && isMine) {
-    const btn = document.createElement("button");
-    btn.className = "action-btn done-btn";
-    btn.textContent = "تم التنفيذ";
-    btn.onclick = () => completeRequest(id);
-    actionSlot.appendChild(btn);
+    const finishBtn = document.createElement("button");
+    finishBtn.className = "action-btn done-btn";
+    finishBtn.textContent = "إنهاء الطلب";
+    finishBtn.onclick = () => completeRequest(id, "");
+    actionSlot.appendChild(finishBtn);
+
+    const noteBtn = document.createElement("button");
+    noteBtn.className = "action-btn note-finish-btn";
+    noteBtn.textContent = "إنهاء مع ملاحظة";
+    noteBtn.onclick = () => {
+      const note = prompt("اكتب الملاحظة:", "");
+      if (note === null) return; // إلغاء
+      completeRequest(id, note.trim());
+    };
+    actionSlot.appendChild(noteBtn);
   }
 
   card.appendChild(actionSlot);
@@ -333,23 +364,20 @@ async function acceptRequest(id) {
   }
 }
 
-async function completeRequest(id) {
-  const note = prompt("ملاحظة اختيارية عن الطلب (اتركيها فارغة إذا ما في ملاحظة):", "");
-  if (note === null) return;
-
+async function completeRequest(id, note) {
   const ref = doc(db, "callRequests", id);
   try {
     await updateDoc(ref, {
       status: "done",
       doneAt: serverTimestamp(),
-      note: note.trim(),
+      note: note || "",
     });
   } catch (err) {
     alert("تعذر تحديث حالة الطلب");
   }
 }
 
-// -------- سجل اليوم (طلبات قسمها الممرضة اليوم) --------
+// -------- سجل اليوم (طلبات استلمتها هذه الممرضة اليوم) --------
 function listenForTodayLog() {
   if (logUnsubscribe) { logUnsubscribe(); logUnsubscribe = null; }
 
