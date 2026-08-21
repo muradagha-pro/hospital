@@ -9,14 +9,17 @@
 <body>
 
 <div class="login-card" id="loginCard">
-  <h1>تسجيل الدخول</h1>
-  <p class="subtitle" style="margin-bottom:0;">أدخلي اسمك لعرض طلبات المرضى</p>
+  <h1 id="loginTitle">تسجيل الدخول</h1>
+  <p class="subtitle" id="loginSubtitle" style="margin-bottom:0;">أدخلي اسمك لعرض طلبات المرضى</p>
   <input type="text" id="nameInput" placeholder="اسم الممرضة">
   <button id="loginBtn">دخول</button>
 </div>
 
 <div class="nurse-header" id="nurseHeader" style="display:none;">
-  <div class="nurse-name" id="nurseName"></div>
+  <div>
+    <div class="nurse-name" id="nurseName"></div>
+    <div class="nurse-dept" id="nurseDept"></div>
+  </div>
   <div class="header-controls">
     <button class="icon-toggle" id="muteBtn" title="كتم صوت الجرس">🔔</button>
     <button class="change-name" id="notifyBtn">تفعيل إشعارات المتصفح</button>

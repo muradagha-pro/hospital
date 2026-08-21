@@ -50,6 +50,12 @@ body {
   letter-spacing: 0.5px;
 }
 
+.topbar .dept-label {
+  font-weight: 700;
+  color: var(--teal-dark);
+  font-size: 0.95rem;
+}
+
 .topbar .label {
   color: var(--muted);
   font-size: 0.85rem;
@@ -224,6 +230,12 @@ h1 {
   color: var(--teal-dark);
 }
 
+.nurse-dept {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
 .change-name {
   font-size: 0.8rem;
   color: var(--muted);
@@ -380,6 +392,126 @@ h1 {
   padding: 6px 12px;
   cursor: pointer;
   white-space: nowrap;
+}
+
+/* --- Admin dashboard --- */
+.admin-wrap {
+  width: 100%;
+  max-width: 860px;
+}
+
+.admin-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--teal-dark);
+  margin-bottom: 4px;
+}
+
+.admin-subtitle {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+}
+
+.range-tabs {
+  display: flex;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 4px;
+  margin-bottom: 24px;
+  max-width: 320px;
+}
+
+.range-tabs .tab-btn { flex: 1; }
+
+.stat-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 18px;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--teal-dark);
+}
+
+.stat-label {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--teal-dark);
+  margin: 30px 0 14px;
+}
+
+.dept-row {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 10px;
+}
+
+.dept-row-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.dept-row-name { font-weight: 700; }
+
+.dept-row-stats {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.dept-bar-track {
+  height: 8px;
+  background: #EFEDE6;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.dept-bar-fill {
+  height: 100%;
+  background: var(--teal);
+  border-radius: 999px;
+}
+
+.comment-item {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 10px;
+}
+
+.comment-meta {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.comment-text {
+  font-size: 0.9rem;
+  line-height: 1.6;
 }
 
 .action-btn {

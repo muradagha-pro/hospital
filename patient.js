@@ -2,9 +2,11 @@ import { db } from "./firebase-config.js";
 import {
   collection, addDoc, doc, onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+import { departmentForRoom } from "./departments.js";
 
-// -------- تحديد رقم الغرفة --------
-// يُقرأ من رابط QR الخاص بالغرفة، مثال: patient.html?room=204
+// -------- تحديد رقم الغرفة والقسم --------
+// يُقرأ رقم الغرفة من رابط QR الخاص بالغرفة، مثال: patient.html?room=204
+// والقسم يُحدَّد تلقائياً حسب مجال رقم الغرفة (معرّف بملف departments.js)
 const params = new URLSearchParams(window.location.search);
 let room = params.get("room");
 
@@ -12,7 +14,10 @@ if (!room) {
   room = prompt("لم يتم تحديد رقم الغرفة تلقائياً. الرجاء إدخال رقم الغرفة:");
 }
 
+const dept = departmentForRoom(room);
+
 document.getElementById("roomBadge").textContent = room || "؟";
+document.getElementById("deptLabel").textContent = dept ? dept.name : "غير محدد";
 
 const callBtn = document.getElementById("callBtn");
 const callBtnText = document.getElementById("callBtnText");
@@ -25,7 +30,6 @@ const labels = [document.getElementById("label1"), document.getElementById("labe
 const STORAGE_KEY = `activeRequest_room_${room}`;
 let unsubscribe = null;
 
-// إذا كان هناك طلب نشط سابق لنفس الغرفة (بعد تحديث الصفحة مثلاً)، أعد الاستماع له
 const existingId = localStorage.getItem(STORAGE_KEY);
 if (existingId) {
   watchRequest(existingId);
@@ -33,17 +37,26 @@ if (existingId) {
 
 callBtn.addEventListener("click", async () => {
   if (callBtn.disabled) return;
+
+  if (!dept) {
+    alert("تعذر تحديد القسم المسؤول عن هذه الغرفة. الرجاء إبلاغ الإدارة لمراجعة رقم الغرفة.");
+    return;
+  }
+
   callBtn.disabled = true;
   callBtnText.textContent = "جارِ الإرسال...";
 
   try {
     const docRef = await addDoc(collection(db, "callRequests"), {
       room: room,
+      department: dept.id,
+      departmentName: dept.name,
       status: "sent",
       receivedBy: null,
       createdAt: serverTimestamp(),
       receivedAt: null,
       doneAt: null,
+      note: "",
     });
     localStorage.setItem(STORAGE_KEY, docRef.id);
     watchRequest(docRef.id);
@@ -69,7 +82,6 @@ function watchRequest(requestId) {
 
     if (data.status === "done") {
       callBtn.classList.remove("waiting");
-      // بعد 6 ثوانٍ، أعد تفعيل الزر للسماح بطلب جديد
       setTimeout(() => {
         localStorage.removeItem(STORAGE_KEY);
         stepper.classList.remove("visible");

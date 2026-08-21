@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>لوحة إحصائيات الإدارة</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="admin-wrap">
+  <div class="admin-title">لوحة إحصائيات الإدارة</div>
+  <div class="admin-subtitle">استدعاءات التمريض — الاستجابة وأوقاتها لكل قسم</div>
+
+  <div class="range-tabs">
+    <button class="tab-btn active" id="rangeToday">اليوم</button>
+    <button class="tab-btn" id="rangeWeek">آخر 7 أيام</button>
+  </div>
+
+  <div id="loadingMsg" style="color: var(--muted); text-align:center; padding: 30px;">جارِ تحميل البيانات...</div>
+
+  <div id="content" style="display:none;">
+    <div class="stat-cards">
+      <div class="stat-card">
+        <div class="stat-value" id="statTotal">0</div>
+        <div class="stat-label">إجمالي الاستدعاءات</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statDone">0</div>
+        <div class="stat-label">تم تنفيذها</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statPending">0</div>
+        <div class="stat-label">لم تُستلم بعد</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statAvgTime">--</div>
+        <div class="stat-label">متوسط وقت الاستجابة</div>
+      </div>
+    </div>
+
+    <div class="section-title">الاستجابة حسب القسم</div>
+    <div id="deptBreakdown"></div>
+
+    <div class="section-title">ملاحظات الممرضات على الطلبات</div>
+    <div id="commentsList"></div>
+    <div id="commentsEmpty" class="empty-state" style="display:none;">لا توجد ملاحظات مسجّلة بهذه الفترة</div>
+  </div>
+</div>
+
+<script type="module" src="admin.js"></script>
+</body>
+</html>

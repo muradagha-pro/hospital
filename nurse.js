@@ -3,12 +3,16 @@ import {
   collection, query, where, orderBy, onSnapshot,
   doc, runTransaction, updateDoc, serverTimestamp, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+import { departmentName } from "./departments.js";
 
 const loginCard = document.getElementById("loginCard");
+const loginTitle = document.getElementById("loginTitle");
+const loginSubtitle = document.getElementById("loginSubtitle");
 const nameInput = document.getElementById("nameInput");
 const loginBtn = document.getElementById("loginBtn");
 const nurseHeader = document.getElementById("nurseHeader");
 const nurseNameEl = document.getElementById("nurseName");
+const nurseDeptEl = document.getElementById("nurseDept");
 const changeNameBtn = document.getElementById("changeNameBtn");
 const requestList = document.getElementById("requestList");
 const emptyState = document.getElementById("emptyState");
@@ -22,11 +26,39 @@ const logList = document.getElementById("logList");
 const logEmptyState = document.getElementById("logEmptyState");
 
 const NAME_KEY = "nurseName";
+const DEPT_KEY = "nurseDept";
 const MUTE_KEY = "nurseSoundMuted";
+
 let myName = localStorage.getItem(NAME_KEY);
+
+// -------- تحديد القسم: من رابط QR الخاص بمحطة القسم فقط --------
+// كل قسم إله رابط QR ثابت خاص فيه، مثال: nurse.html?dept=internal
+const urlParams = new URLSearchParams(window.location.search);
+const deptFromUrl = urlParams.get("dept");
+let myDept = deptFromUrl || localStorage.getItem(DEPT_KEY) || "";
+
 let isMuted = localStorage.getItem(MUTE_KEY) === "true";
-let knownRequestIds = new Set(); // لتفادي تكرار إشعار المتصفح لنفس الطلب
+let knownRequestIds = new Set();
 let logUnsubscribe = null;
+let currentUnsubscribe = null;
+
+if (deptFromUrl) localStorage.setItem(DEPT_KEY, deptFromUrl);
+
+if (myDept) {
+  loginTitle.textContent = `تسجيل الدخول — قسم ${departmentName(myDept)}`;
+  loginSubtitle.textContent = "أدخلي اسمك للدخول";
+  nameInput.style.display = "block";
+  loginBtnVisible(true);
+} else {
+  loginTitle.textContent = "لم يتم التعرف على القسم";
+  loginSubtitle.textContent = "الرجاء مسح رمز QR الخاص بمحطة قسمك لتسجيل الدخول.";
+  nameInput.style.display = "none";
+  loginBtnVisible(false);
+}
+
+function loginBtnVisible(visible) {
+  document.getElementById("loginBtn").style.display = visible ? "block" : "none";
+}
 
 // -------- الصوت: جرس يتكرر لين الاستلام --------
 let audioCtx = null;
@@ -134,7 +166,7 @@ function maybeSendBrowserNotification(room) {
 }
 
 // -------- تسجيل الدخول --------
-if (myName) {
+if (myName && myDept) {
   showDashboard();
 } else {
   showLogin();
@@ -143,6 +175,8 @@ if (myName) {
 loginBtn.addEventListener("click", () => {
   const val = nameInput.value.trim();
   if (!val) { alert("الرجاء إدخال الاسم"); return; }
+  if (!myDept) { alert("الرجاء مسح رمز QR الخاص بقسمك أولاً"); return; }
+
   myName = val;
   localStorage.setItem(NAME_KEY, myName);
   unlockAudio();
@@ -151,6 +185,7 @@ loginBtn.addEventListener("click", () => {
 
 changeNameBtn.addEventListener("click", () => {
   localStorage.removeItem(NAME_KEY);
+  localStorage.removeItem(DEPT_KEY);
   location.reload();
 });
 
@@ -174,6 +209,7 @@ function showDashboard() {
   nurseHeader.style.display = "flex";
   tabs.style.display = "flex";
   nurseNameEl.textContent = myName;
+  nurseDeptEl.textContent = `قسم ${departmentName(myDept)}`;
   listenForRequests();
   switchTab("current");
 }
@@ -199,15 +235,16 @@ function switchTab(which) {
   }
 }
 
-// -------- الطلبات الحالية (مباشرة) --------
+// -------- الطلبات الحالية لقسم الممرضة فقط --------
 function listenForRequests() {
   const q = query(
     collection(db, "callRequests"),
+    where("department", "==", myDept),
     where("status", "in", ["sent", "received"]),
     orderBy("createdAt", "asc")
   );
 
-  onSnapshot(q, (snapshot) => {
+  currentUnsubscribe = onSnapshot(q, (snapshot) => {
     requestList.innerHTML = "";
 
     if (snapshot.empty) {
@@ -296,10 +333,9 @@ async function acceptRequest(id) {
   }
 }
 
-// عند إنهاء التنفيذ، تقدر الممرضة تضيف ملاحظة اختيارية فوراً
 async function completeRequest(id) {
   const note = prompt("ملاحظة اختيارية عن الطلب (اتركيها فارغة إذا ما في ملاحظة):", "");
-  if (note === null) return; // ضغطت إلغاء
+  if (note === null) return;
 
   const ref = doc(db, "callRequests", id);
   try {
@@ -313,7 +349,7 @@ async function completeRequest(id) {
   }
 }
 
-// -------- سجل اليوم (كل الطلبات التي استلمتها هذه الممرضة اليوم) --------
+// -------- سجل اليوم (طلبات قسمها الممرضة اليوم) --------
 function listenForTodayLog() {
   if (logUnsubscribe) { logUnsubscribe(); logUnsubscribe = null; }
 
