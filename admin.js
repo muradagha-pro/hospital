@@ -7,10 +7,6 @@ import {
   onSnapshot,
   Timestamp
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
-
-import {
-  collection, query, where, orderBy, onSnapshot, Timestamp
-} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 import { DEPARTMENTS } from "./departments.js";
 
 const rangeToday = document.getElementById("rangeToday");
