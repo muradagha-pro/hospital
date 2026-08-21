@@ -13,6 +13,7 @@
     <div class="label">الغرفة</div>
     <div class="room-badge" id="roomBadge">--</div>
   </div>
+
   <div style="text-align:left;">
     <div class="label">القسم</div>
     <div class="dept-label" id="deptLabel">--</div>
@@ -20,7 +21,9 @@
 </div>
 
 <div class="card">
+
   <h1>هل تحتاج مساعدة؟</h1>
+
   <p class="subtitle">
     اضغط الزر بالأسفل ليصل طلبك مباشرة إلى الممرضة المسؤولة عن غرفتك.
   </p>
@@ -31,10 +34,38 @@
   </button>
 
   <div class="stepper" id="stepper">
+
     <div class="steps">
       <div class="step-node" id="node1"></div>
       <div class="step-node" id="node2"></div>
       <div class="step-node" id="node3"></div>
     </div>
 
-    <div class="step
+    <div class="step-labels">
+      <span id="label1">تم الإرسال</span>
+      <span id="label2">قيد التنفيذ</span>
+      <span id="label3">تم التنفيذ</span>
+    </div>
+
+    <div class="status-line" id="statusLine"></div>
+    <div class="status-time" id="statusTime"></div>
+
+  </div>
+
+  <div style="margin-top:20px;">
+
+    <a id="feedbackLink"    class="action-btn note-finish-btn"
+        style="width:100%;">
+        شكوى أو اقتراح للإدارة
+      </button>
+    </a>
+
+  </div>
+
+</div>
+
+<script type="module" src="patient.js"></script>
+
+</body>
+</html>
+``
