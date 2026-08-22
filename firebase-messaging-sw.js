@@ -17,10 +17,18 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+self.addEventListener("install", () => {
+  self.skipWaiting();
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(clients.claim());
+});
+
 // الإشعارات التي تصل والصفحة مغلقة أو في الخلفية
 messaging.onBackgroundMessage((payload) => {
-  const title = payload.notification?.title || "تنبيه جديد";
-  const body  = payload.notification?.body  || "";
+  const title = payload.data?.title || payload.notification?.title || "تنبيه جديد";
+  const body  = payload.data?.body || payload.notification?.body  || "";
   const tag   = payload.data?.tag || "alert";
   const type  = payload.data?.type || "";
   const dept  = payload.data?.dept || "";
@@ -54,14 +62,23 @@ self.addEventListener("notificationclick", (event) => {
       includeUncontrolled: true
     });
 
+    const absoluteTarget = new URL(targetUrl, self.location.origin).href;
+
     for (const client of allClients) {
-      if (client.url.includes(targetUrl.replace(/^\//, "")) && "focus" in client) {
+      if (client.url === absoluteTarget && "focus" in client) {
+        return client.focus();
+      }
+    }
+
+    for (const client of allClients) {
+      if ("focus" in client) {
+        client.navigate(absoluteTarget);
         return client.focus();
       }
     }
 
     if (clients.openWindow) {
-      return clients.openWindow(targetUrl);
+      return clients.openWindow(absoluteTarget);
     }
   })());
 });

@@ -31,11 +31,15 @@ async function sendPush(tokens, title, body, data = {}) {
 
   const response = await messaging.sendEachForMulticast({
     tokens,
-    notification: { title, body },
     data: Object.fromEntries(
-      Object.entries(data).map(([k, v]) => [k, String(v)])
+      Object.entries({ ...data, title, body }).map(([k, v]) => [k, String(v)])
     ),
     android: { priority: "high" },
+    webpush: {
+      headers: {
+        Urgency: "high",
+      },
+    },
     apns: {
       headers: { "apns-priority": "10" },
       payload: { aps: { sound: "default", badge: 1 } },

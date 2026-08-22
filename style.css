@@ -555,9 +555,9 @@ h1 {
   align-items: center;
   justify-content: center;
   text-decoration: none;
-  background: transparent;
-  color: var(--teal-dark);
-  border: 1px solid var(--line);
+  background: rgba(217,138,61,0.12);
+  color: #8c4f16;
+  border: 1.5px solid var(--amber);
   border-radius: 999px;
   padding: 7px 12px;
   font-size: 0.8rem;
