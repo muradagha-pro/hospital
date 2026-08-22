@@ -316,7 +316,7 @@ function buildProductCard(id, data) {
   card.className = "request-card cafeteria-product-card";
 
   const priceLabel = Number.isFinite(Number(data.price))
-    ? `${Number(data.price).toFixed(2)} ر.س` : "--";
+    ? `${Number(data.price).toFixed(2)} ل.س` : "--";
 
   card.innerHTML = `
     <div>

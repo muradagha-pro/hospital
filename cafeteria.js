@@ -260,7 +260,7 @@ function buildOrderCard(order) {
       </div>
       <div class="request-meta" style="margin-top:6px;">${escapeHtml(itemSummary)}</div>
       <div class="request-meta" style="margin-top:4px; font-weight:700; color:var(--teal-dark);">
-        الإجمالي: ${Number(order.total || 0).toFixed(2)} ر.س
+        الإجمالي: ${Number(order.total || 0).toFixed(2)} ل.س
       </div>
       ${order.note ? `<div class="detail-note" style="margin-top:8px;">${escapeHtml(order.note)}</div>` : ""}
     </div>

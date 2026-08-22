@@ -223,7 +223,7 @@ function renderCafeteriaStats(orders) {
   cafeStatNew.textContent = String(newCount);
   cafeStatPreparing.textContent = String(preparingCount);
   cafeStatDone.textContent = String(doneCount);
-  cafeStatRevenue.textContent = `${revenue.toFixed(2)} ر.س`;
+  cafeStatRevenue.textContent = `${revenue.toFixed(2)} ل.س`;
 }
 
 // بناء قائمة تفاصيل طلبات قسم معين: وقت الطلب، مدة الاستجابة، مدة التنفيذ، والملاحظة

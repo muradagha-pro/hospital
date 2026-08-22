@@ -152,7 +152,7 @@ function buildProductItem(product) {
   card.innerHTML = `
     <div>
       <div class="request-room">${escapeHtml(product.name || "")}</div>
-      <div class="request-meta">${safePrice.toFixed(2)} ر.س</div>
+      <div class="request-meta">${safePrice.toFixed(2)} ل.س</div>
     </div>
   `;
 
@@ -204,7 +204,7 @@ function changeQty(product, delta) {
 function updateTotal() {
   let total = 0;
   cart.forEach((item) => { total += item.price * item.qty; });
-  totalLabel.textContent = `الإجمالي: ${total.toFixed(2)} ر.س`;
+  totalLabel.textContent = `الإجمالي: ${total.toFixed(2)} ل.س`;
 }
 
 async function submitOrder() {

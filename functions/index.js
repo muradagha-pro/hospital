@@ -102,7 +102,7 @@ exports.onNewCafeteriaOrder = onDocumentCreated(
     await sendPush(
       tokens,
       "طلب كافتيريا جديد 🍽️",
-      `غرفة ${room} — ${totalFormatted} ر.س${itemSummary ? `\n${itemSummary}` : ""}`,
+      `غرفة ${room} — ${totalFormatted} ل.س${itemSummary ? `\n${itemSummary}` : ""}`,
       { tag: `cafe-${room}`, type: "cafeteriaOrder", room: String(room) }
     );
   }
