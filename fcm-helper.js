@@ -35,11 +35,11 @@ function getMsg() {
 export async function registerFCM(meta) {
   if (!("serviceWorker" in navigator)) return;
   if (!("Notification" in window)) return;
-  if (Notification.permission === "denied") return;
+  if (Notification.permission === "denied") return { permission: "denied", tokenSaved: false };
 
   if (VAPID_KEY === "PASTE_YOUR_VAPID_KEY_HERE") {
     console.warn("FCM: لم يتم تعيين مفتاح VAPID — إشعارات الخلفية معطّلة.");
-    return;
+    return { permission: "unsupported", tokenSaved: false };
   }
 
   try {
@@ -48,7 +48,9 @@ export async function registerFCM(meta) {
 
     // طلب الإذن إذا لم يُمنح بعد
     const permission = await Notification.requestPermission();
-    if (permission !== "granted") return;
+    if (permission !== "granted") {
+      return { permission, tokenSaved: false };
+    }
 
     // الحصول على توكن FCM
     const token = await getToken(getMsg(), {
@@ -56,7 +58,7 @@ export async function registerFCM(meta) {
       serviceWorkerRegistration: swReg,
     });
 
-    if (!token) return;
+    if (!token) return { permission, tokenSaved: false };
 
     // حفظ/تحديث التوكن في Firestore (التوكن نفسه كمعرّف للمستند)
     await setDoc(doc(db, "fcmTokens", token), {
@@ -66,8 +68,10 @@ export async function registerFCM(meta) {
     }, { merge: true });
 
     console.log("FCM ✓ تم تسجيل الجهاز");
+    return { permission, tokenSaved: true };
   } catch (err) {
     console.warn("FCM:", err.message);
+    return { permission: Notification.permission || "default", tokenSaved: false };
   }
 }
 

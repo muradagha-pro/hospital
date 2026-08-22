@@ -22,12 +22,47 @@ messaging.onBackgroundMessage((payload) => {
   const title = payload.notification?.title || "تنبيه جديد";
   const body  = payload.notification?.body  || "";
   const tag   = payload.data?.tag || "alert";
+  const type  = payload.data?.type || "";
+  const dept  = payload.data?.dept || "";
+
+  let targetUrl = "/";
+  if (type === "callRequest") {
+    targetUrl = dept
+      ? `/nurse.html?dept=${encodeURIComponent(dept)}`
+      : "/nurse.html";
+  } else if (type === "cafeteriaOrder") {
+    targetUrl = "/cafeteria.html";
+  }
 
   self.registration.showNotification(title, {
     body,
     tag,
     vibrate: [300, 100, 300, 100, 300],
     requireInteraction: true, // يبقى التنبيه حتى يُغلق يدوياً
+    data: { targetUrl },
   });
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  const targetUrl = event.notification.data?.targetUrl || "/";
+
+  event.waitUntil((async () => {
+    const allClients = await clients.matchAll({
+      type: "window",
+      includeUncontrolled: true
+    });
+
+    for (const client of allClients) {
+      if (client.url.includes(targetUrl.replace(/^\//, "")) && "focus" in client) {
+        return client.focus();
+      }
+    }
+
+    if (clients.openWindow) {
+      return clients.openWindow(targetUrl);
+    }
+  })());
 });
 

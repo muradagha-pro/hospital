@@ -69,6 +69,7 @@ body {
   padding: 28px 22px;
   box-shadow: 0 1px 2px rgba(30,74,70,0.04), 0 8px 24px rgba(30,74,70,0.06);
   border: 1px solid var(--line);
+  position: relative;
 }
 
 h1 {
@@ -547,6 +548,24 @@ h1 {
   align-items: center;
   gap: 12px;
   font-size: 1rem;
+}
+
+.cafeteria-manage-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  background: transparent;
+  color: var(--teal-dark);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+  position: absolute;
+  top: 18px;
+  left: 18px;
 }
 
 /* --- Nurse dashboard --- */

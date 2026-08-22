@@ -73,8 +73,6 @@ function unlockAudio() {
   } catch (e) {
     console.warn("Audio:", e);
   }
-  // نسجّل FCM بعد أول لمسة لأن الإذن يحتاج تفاعل المستخدم
-  registerFCM({ type: "cafeteria" });
 }
 
 ["click", "touchstart", "keydown"].forEach((evt) => {
@@ -128,8 +126,8 @@ notifyBtn.addEventListener("click", async () => {
     alert("هذا المتصفح لا يدعم الإشعارات");
     return;
   }
-  const perm = await Notification.requestPermission();
-  if (perm === "granted") {
+  const result = await registerFCM({ type: "cafeteria" });
+  if (result?.permission === "granted") {
     notifyBanner.style.display = "block";
     notifyBtn.textContent = "الإشعارات مفعّلة ✓";
     notifyBtn.disabled = true;
@@ -142,16 +140,8 @@ notifyBtn.addEventListener("click", async () => {
 if (typeof Notification !== "undefined" && Notification.permission === "granted") {
   notifyBtn.textContent = "الإشعارات مفعّلة ✓";
   notifyBtn.disabled = true;
-}
-
-function maybeSendNotification(room) {
-  if (alertMode === "off") return;
-  if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-    new Notification("طلب كافتيريا جديد 🍽️", {
-      body: `غرفة ${room} أرسلت طلباً`,
-      tag: `cafe-${room}-${Date.now()}`,
-    });
-  }
+  notifyBanner.style.display = "block";
+  registerFCM({ type: "cafeteria" });
 }
 
 // ─────────────────────────────────────────────
@@ -187,9 +177,6 @@ function listenForOrders() {
 
     // detect new "new" orders not seen before
     allOrders.forEach((o) => {
-      if (o.status === "new" && !knownOrderIds.has(o.id)) {
-        maybeSendNotification(o.room);
-      }
       knownOrderIds.add(o.id);
     });
 

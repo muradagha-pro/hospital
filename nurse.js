@@ -177,8 +177,8 @@ notifyBtn.addEventListener("click", async () => {
     alert("هذا المتصفح لا يدعم إشعارات النظام");
     return;
   }
-  const permission = await Notification.requestPermission();
-  if (permission === "granted") {
+  const result = await registerFCM({ type: "nurse", dept: myDept, name: myName });
+  if (result?.permission === "granted") {
     notifyBanner.style.display = "block";
     notifyBtn.textContent = "الإشعارات مفعّلة ✓";
     notifyBtn.disabled = true;
@@ -187,17 +187,6 @@ notifyBtn.addEventListener("click", async () => {
     alert("لم يتم منح إذن الإشعارات. يمكنك تفعيلها لاحقاً من إعدادات المتصفح.");
   }
 });
- 
-function maybeSendBrowserNotification(room) {
-  if (alertMode === "off") return;
-  if ("Notification" in window && Notification.permission === "granted") {
-    new Notification("طلب استدعاء جديد", {
-      body: `غرفة ${room} تحتاج مساعدة`,
-      tag: `room-${room}-${Date.now()}`,
-      vibrate: [300, 100, 300, 100, 300],
-    });
-  }
-}
  
 if (Notification && Notification.permission === "granted") {
   notifyBtn.textContent = "الإشعارات مفعّلة ✓";
@@ -246,8 +235,11 @@ function showDashboard() {
   nurseDeptEl.textContent = `قسم ${departmentName(myDept)}`;
   if (!audioUnlocked) soundHint.style.display = "block";
 
-  // تسجيل FCM لاستقبال الإشعارات في الخلفية
-  registerFCM({ type: "nurse", dept: myDept, name: myName });
+  // تسجيل صامت فقط إذا كان الإذن ممنوحاً مسبقاً
+  if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+    registerFCM({ type: "nurse", dept: myDept, name: myName });
+    notifyBanner.style.display = "block";
+  }
 
   listenForRequests();
   switchTab("current");
@@ -301,9 +293,6 @@ function listenForRequests() {
  
       if (data.status === "sent") {
         pendingCount++;
-        if (!knownRequestIds.has(docSnap.id)) {
-          maybeSendBrowserNotification(data.room);
-        }
       }
       knownRequestIds.add(docSnap.id);
     });
