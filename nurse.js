@@ -4,7 +4,8 @@ import {
   doc, runTransaction, updateDoc, serverTimestamp, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 import { departmentName } from "./departments.js";
- 
+import { registerFCM } from "./fcm-helper.js";
+
 const loginCard = document.getElementById("loginCard");
 const loginTitle = document.getElementById("loginTitle");
 const loginSubtitle = document.getElementById("loginSubtitle");
@@ -31,7 +32,22 @@ const DEPT_KEY = "nurseDept";
 const ALERT_MODE_KEY = "nurseAlertMode"; // "full" | "vibrate" | "off"
  
 let myName = localStorage.getItem(NAME_KEY);
- 
+
+// ── Wake Lock — يمنع الشاشة من النوم ──
+let wakeLock = null;
+
+async function requestWakeLock() {
+  if (!("wakeLock" in navigator)) return;
+  try {
+    wakeLock = await navigator.wakeLock.request("screen");
+    wakeLock.addEventListener("release", () => { wakeLock = null; });
+  } catch (e) {
+    console.warn("Wake Lock:", e);
+  }
+}
+
+requestWakeLock();
+
 // -------- تحديد القسم: من رابط QR الخاص بمحطة القسم فقط --------
 const urlParams = new URLSearchParams(window.location.search);
 const deptFromUrl = urlParams.get("dept");
@@ -88,8 +104,9 @@ function unlockAudio() {
  
 // بعض المتصفحات بتوقف مجرى الصوت لما تختفي الصفحة عن الشاشة، نعيد تفعيله لما ترجع
 document.addEventListener("visibilitychange", () => {
-  if (!document.hidden && audioCtx && audioCtx.state === "suspended") {
-    audioCtx.resume();
+  if (document.visibilityState === "visible") {
+    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+    if (!wakeLock) requestWakeLock();
   }
 });
  
@@ -228,6 +245,10 @@ function showDashboard() {
   nurseNameEl.textContent = myName;
   nurseDeptEl.textContent = `قسم ${departmentName(myDept)}`;
   if (!audioUnlocked) soundHint.style.display = "block";
+
+  // تسجيل FCM لاستقبال الإشعارات في الخلفية
+  registerFCM({ type: "nurse", dept: myDept, name: myName });
+
   listenForRequests();
   switchTab("current");
 }

@@ -8,9 +8,26 @@
 </head>
 <body>
 
+<div class="banner" id="soundHint" style="display:none;">
+  🔈 لتفعيل صوت التنبيه، اضغط بأي مكان بالشاشة مرة واحدة.
+</div>
+
+<div class="banner" id="notifyBanner" style="display:none;">
+  تم تفعيل إشعارات المتصفح ✓ — ستصلك حتى لو التبويب في الخلفية، بشرط يبقى المتصفح مفتوحاً.
+</div>
+
 <div class="card">
   <h1>لوحة الكافتيريا</h1>
   <p class="subtitle">الطلبات المباشرة من الغرف.</p>
+
+  <div style="display:flex; gap:10px; width:100%; max-width:640px; flex-wrap:wrap; margin-bottom:10px; align-items:center;">
+    <select id="alertModeSelect" class="alert-select">
+      <option value="full">صوت واهتزاز</option>
+      <option value="vibrate">اهتزاز فقط</option>
+      <option value="off">إيقاف التنبيهات</option>
+    </select>
+    <button class="change-name" id="notifyBtn">تفعيل إشعارات المتصفح</button>
+  </div>
 
   <div style="display:flex; gap:10px; width:100%; max-width:640px; flex-wrap:wrap; margin-bottom:14px;">
 	<button id="tabCurrent" class="tab-btn active">الطلبات الحالية</button>

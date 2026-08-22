@@ -12,6 +12,7 @@
   <h1>إدارة منتجات الكافتيريا</h1>
   <p class="subtitle">أضف المنتجات وعدّل توفرها للطلبات.</p>
 
+  <!-- ===== إضافة منتج ===== -->
   <div class="login-card" style="width:100%; max-width:640px; margin: 8px 0 18px;">
 	<div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
 	  <label style="flex:2; min-width:190px;">
@@ -24,10 +25,33 @@
 		<input id="productPrice" type="number" min="0" step="0.01" placeholder="10" style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--line);">
 	  </label>
 
+	  <label style="flex:1; min-width:150px;">
+		<span class="label" style="display:block; margin-bottom:6px;">الفئة</span>
+		<select id="productCategory" style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--line); font-family:inherit; background:var(--surface);">
+		  <option value="">جارِ التحميل...</option>
+		</select>
+	  </label>
+
 	  <button id="addProductBtn" class="action-btn" style="padding:11px 16px;">إضافة</button>
 	</div>
   </div>
 
+  <!-- ===== إدارة الفئات ===== -->
+  <div style="width:100%; max-width:640px; margin-bottom:18px;">
+    <div class="cafe-category-header open" id="catMgrToggle" style="cursor:pointer;">
+      <span>إدارة الفئات</span>
+      <span class="cafe-category-chevron">&#9660;</span>
+    </div>
+    <div class="cafe-category-body open" id="catMgrBody">
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding:8px 4px;">
+        <input id="newCategoryLabel" type="text" placeholder="اسم الفئة الجديدة" style="flex:1; min-width:160px; padding:9px 12px; border-radius:10px; border:1px solid var(--line); font-family:inherit;">
+        <button id="addCategoryBtn" class="action-btn" style="white-space:nowrap;">إضافة فئة</button>
+      </div>
+      <div id="categoriesList" style="padding:4px;"></div>
+    </div>
+  </div>
+
+  <!-- ===== قائمة المنتجات ===== -->
   <div id="productsList" style="width:100%; max-width:640px;"></div>
 
   <div id="productsEmpty" class="empty-state" style="display:none; max-width:640px; padding:30px 20px;">

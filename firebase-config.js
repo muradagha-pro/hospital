@@ -4,17 +4,16 @@
 // (اشرحلك بالتفصيل بملف README.md وين تلاقي هاي القيم)
 // =========================================================
 const firebaseConfig = {
-  apiKey: "AIzaSyDbgQyBOdGD2a49rvqaqaJH8INEckJUVN8",
-  authDomain: "hospital-4bf1c.firebaseapp.com",
-  projectId: "hospital-4bf1c",
-  storageBucket: "hospital-4bf1c.firebasestorage.app",
-  messagingSenderId: "414275679868",
-  appId: "1:414275679868:web:f08ceb71b29ce2eb9efbf9",
-  measurementId: "G-FZT78HSN77"
+  apiKey: "AIzaSyDV1L928RdA2ZPkV_qj-cHH6RGwu8zAJSQ",
+  authDomain: "al-hourani.firebaseapp.com",
+  projectId: "al-hourani",
+  storageBucket: "al-hourani.firebasestorage.app",
+  messagingSenderId: "24757167329",
+  appId: "1:24757167329:web:af1f328be01a588024c3a0"
 };
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
-const app = initializeApp(firebaseConfig);
+export const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
