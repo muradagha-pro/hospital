@@ -1,1 +1,45 @@
-<!DOCTYPE html><html lang="ar" dir="rtl"><body><h1>إدارة منتجات الكافتيريا</h1><script type="module" src="cafeteria-products.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>إدارة منتجات الكافتيريا</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="card">
+  <h1>إدارة منتجات الكافتيريا</h1>
+  <p class="subtitle">أضف المنتجات وعدّل توفرها للطلبات.</p>
+
+  <div class="login-card" style="width:100%; max-width:640px; margin: 8px 0 18px;">
+	<div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+	  <label style="flex:2; min-width:190px;">
+		<span class="label" style="display:block; margin-bottom:6px;">اسم المنتج</span>
+		<input id="productName" type="text" placeholder="مثال: ساندويتش جبنة" style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--line);">
+	  </label>
+
+	  <label style="flex:1; min-width:130px;">
+		<span class="label" style="display:block; margin-bottom:6px;">السعر</span>
+		<input id="productPrice" type="number" min="0" step="0.01" placeholder="10" style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--line);">
+	  </label>
+
+	  <button id="addProductBtn" class="action-btn" style="padding:11px 16px;">إضافة</button>
+	</div>
+  </div>
+
+  <div id="productsList" style="width:100%; max-width:640px;"></div>
+
+  <div id="productsEmpty" class="empty-state" style="display:none; max-width:640px; padding:30px 20px;">
+	لا توجد منتجات حالياً
+  </div>
+
+  <a href="cafeteria.html" style="display:block; width:100%; max-width:640px; margin-top:16px; text-decoration:none;">
+	<button class="action-btn done-btn" style="width:100%;">الانتقال إلى لوحة الكافتيريا</button>
+  </a>
+</div>
+
+<script type="module" src="cafeteria-products.js"></script>
+
+</body>
+</html>

@@ -1,1 +1,48 @@
-<!DOCTYPE html><html lang="ar" dir="rtl"><body><h1>طلب من الكافتيريا</h1><script type="module" src="cafeteria-order.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>طلب من الكافتيريا</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+	<div class="label">الغرفة</div>
+	<div class="room-badge" id="roomBadge">--</div>
+  </div>
+  <div style="text-align:left;">
+	<div class="label">الخدمة</div>
+	<div class="dept-label">الكافتيريا</div>
+  </div>
+</div>
+
+<div class="card">
+  <h1>طلب من الكافتيريا</h1>
+  <p class="subtitle">اختر المنتجات ثم أرسل الطلب.</p>
+
+  <div id="productsList" class="cafeteria-products-list"></div>
+  <div id="productsEmpty" class="empty-state cafeteria-empty" style="display:none;">
+	لا توجد منتجات متاحة حالياً
+  </div>
+
+  <label class="cafeteria-note-wrap">
+    <span class="label cafeteria-note-label">ملاحظة (اختياري)</span>
+    <textarea id="orderNote" rows="3" placeholder="مثال: بدون سكر" class="cafeteria-note-input"></textarea>
+  </label>
+
+  <div class="cafeteria-checkout-row">
+    <div id="totalLabel" class="cafeteria-total">الإجمالي: 0.00 ر.س</div>
+	<button id="sendOrderBtn" class="action-btn">إرسال الطلب</button>
+  </div>
+
+  <div id="statusLine" class="status-line cafeteria-status"></div>
+  <div id="statusTime" class="status-time"></div>
+</div>
+
+<script type="module" src="cafeteria-order.js"></script>
+
+</body>
+</html>

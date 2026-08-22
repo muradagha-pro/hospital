@@ -22,10 +22,20 @@ const deptBreakdown = document.getElementById("deptBreakdown");
 const commentsList = document.getElementById("commentsList");
 const commentsEmpty = document.getElementById("commentsEmpty");
 
+const cafeStatTotal = document.getElementById("cafeStatTotal");
+const cafeStatNew = document.getElementById("cafeStatNew");
+const cafeStatPreparing = document.getElementById("cafeStatPreparing");
+const cafeStatDone = document.getElementById("cafeStatDone");
+const cafeStatRevenue = document.getElementById("cafeStatRevenue");
+
 const feedbackList = document.getElementById("feedbackList");
 const feedbackEmpty = document.getElementById("feedbackEmpty");
+const feedbackEmptyDefaultText = feedbackEmpty
+  ? feedbackEmpty.textContent.trim()
+  : "";
 
-let unsubscribe = null;
+let callsUnsubscribe = null;
+let cafeUnsubscribe = null;
 let currentRange = "today";
 let openDeptKey = null; // يتذكر أي قسم كان مفتوح وقت إعادة الرسم
 
@@ -43,7 +53,8 @@ function setRange(range) {
 }
 
 function loadData() {
-  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+  if (callsUnsubscribe) { callsUnsubscribe(); callsUnsubscribe = null; }
+  if (cafeUnsubscribe) { cafeUnsubscribe(); cafeUnsubscribe = null; }
 
   loadingMsg.style.display = "block";
   content.style.display = "none";
@@ -62,7 +73,7 @@ function loadData() {
     orderBy("createdAt", "desc")
   );
 
-  unsubscribe = onSnapshot(q, (snapshot) => {
+  callsUnsubscribe = onSnapshot(q, (snapshot) => {
     const requests = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
     render(requests);
     loadingMsg.style.display = "none";
@@ -71,6 +82,8 @@ function loadData() {
     loadingMsg.textContent = "تعذر تحميل البيانات. تأكد من إعدادات القاعدة (Firestore Rules).";
     console.error(err);
   });
+
+  loadCafeteriaData(startTimestamp);
 }
 
 function render(requests) {
@@ -176,6 +189,43 @@ function render(requests) {
   }
 }
 
+function loadCafeteriaData(startTimestamp) {
+  const q = query(
+    collection(db, "cafeteriaOrders"),
+    where("createdAt", ">=", startTimestamp),
+    orderBy("createdAt", "desc")
+  );
+
+  cafeUnsubscribe = onSnapshot(q, (snapshot) => {
+    const orders = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+    renderCafeteriaStats(orders);
+  }, (err) => {
+    console.error(err);
+    cafeStatTotal.textContent = "--";
+    cafeStatNew.textContent = "--";
+    cafeStatPreparing.textContent = "--";
+    cafeStatDone.textContent = "--";
+    cafeStatRevenue.textContent = "--";
+  });
+}
+
+function renderCafeteriaStats(orders) {
+  const total = orders.length;
+  const newCount = orders.filter((o) => o.status === "new").length;
+  const preparingCount = orders.filter((o) => o.status === "preparing").length;
+  const doneCount = orders.filter((o) => o.status === "done").length;
+
+  const revenue = orders
+    .filter((o) => o.status === "done")
+    .reduce((sum, o) => sum + (Number.isFinite(Number(o.total)) ? Number(o.total) : 0), 0);
+
+  cafeStatTotal.textContent = String(total);
+  cafeStatNew.textContent = String(newCount);
+  cafeStatPreparing.textContent = String(preparingCount);
+  cafeStatDone.textContent = String(doneCount);
+  cafeStatRevenue.textContent = `${revenue.toFixed(2)} ر.س`;
+}
+
 // بناء قائمة تفاصيل طلبات قسم معين: وقت الطلب، مدة الاستجابة، مدة التنفيذ، والملاحظة
 function buildDeptDetail(deptRequests) {
   const wrap = document.createElement("div");
@@ -245,10 +295,16 @@ function listenForFeedbacks() {
     feedbackList.innerHTML = "";
 
     if (snapshot.empty) {
+      if (feedbackEmptyDefaultText) {
+        feedbackEmpty.textContent = feedbackEmptyDefaultText;
+      }
       feedbackEmpty.style.display = "block";
       return;
     }
 
+    if (feedbackEmptyDefaultText) {
+      feedbackEmpty.textContent = feedbackEmptyDefaultText;
+    }
     feedbackEmpty.style.display = "none";
 
     snapshot.forEach((docSnap) => {
@@ -290,6 +346,12 @@ function listenForFeedbacks() {
       feedbackList.appendChild(item);
     });
 
+  }, (err) => {
+    console.error(err);
+    feedbackList.innerHTML = "";
+    feedbackEmpty.textContent =
+      "تعذر تحميل الشكاوى والاقتراحات حالياً. يرجى المحاولة لاحقاً.";
+    feedbackEmpty.style.display = "block";
   });
 
 }

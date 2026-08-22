@@ -61,6 +61,39 @@
     </div>
 
     <div class="section-title">
+      إحصائيات الكافتيريا
+    </div>
+
+    <div class="stat-cards">
+
+      <div class="stat-card">
+        <div class="stat-value" id="cafeStatTotal">0</div>
+        <div class="stat-label">إجمالي طلبات الكافتيريا</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-value" id="cafeStatNew">0</div>
+        <div class="stat-label">طلبات جديدة</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-value" id="cafeStatPreparing">0</div>
+        <div class="stat-label">قيد التحضير</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-value" id="cafeStatDone">0</div>
+        <div class="stat-label">تم التسليم</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-value" id="cafeStatRevenue">0.00 ر.س</div>
+        <div class="stat-label">إيراد الطلبات المسلّمة</div>
+      </div>
+
+    </div>
+
+    <div class="section-title">
       الاستجابة حسب القسم
     </div>
 
@@ -90,4 +123,19 @@
     <div id="feedbackList"></div>
 
     <div
-      id="
+      id="feedbackEmpty"
+      class="empty-state"
+      style="display:none;">
+
+      لا توجد شكاوى أو اقتراحات حالياً
+
+    </div>
+
+  </div>
+
+</div>
+
+<script type="module" src="admin.js"></script>
+
+</body>
+</html>

@@ -73,4 +73,3 @@ sendFeedbackBtn.addEventListener("click", async () => {
   }
 
 });
-``

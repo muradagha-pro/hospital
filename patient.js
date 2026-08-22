@@ -12,15 +12,12 @@ import { departmentForRoom } from "./departments.js";
 // -------- تحديد رقم الغرفة والقسم --------
 const params = new URLSearchParams(window.location.search);
 
-let room = params.get("room");
+const room = (params.get("room") || "").trim();
+const hasValidRoom = /^\d+$/.test(room);
 
-if (!room) {
-  room = prompt(
-    "لم يتم تحديد رقم الغرفة تلقائياً. الرجاء إدخال رقم الغرفة:"
-  );
-}
-
-const dept = departmentForRoom(room);
+const dept = hasValidRoom
+  ? departmentForRoom(room)
+  : null;
 
 document.getElementById("roomBadge").textContent = room || "؟";
 document.getElementById("deptLabel").textContent =
@@ -29,10 +26,18 @@ document.getElementById("deptLabel").textContent =
 const feedbackLink =
   document.getElementById("feedbackLink");
 
-if (feedbackLink) {
-  feedbackLink.href =
-    `feedback.html?room=${encodeURIComponent(room || "")}`;
-}
+const cafeteriaLink =
+  document.getElementById("cafeteriaLink");
+
+configureRoomLink(
+  feedbackLink,
+  "feedback.html"
+);
+
+configureRoomLink(
+  cafeteriaLink,
+  "cafeteria-order.html"
+);
 
 const callBtn =
   document.getElementById("callBtn");
@@ -61,20 +66,39 @@ const labels = [
   document.getElementById("label3")
 ];
 
-const STORAGE_KEY = `activeRequest_room_${room}`;
+const STORAGE_KEY = hasValidRoom
+  ? `activeRequest_room_${room}`
+  : null;
 
 let unsubscribe = null;
 
 const existingId =
-  localStorage.getItem(STORAGE_KEY);
+  STORAGE_KEY
+    ? localStorage.getItem(STORAGE_KEY)
+    : null;
 
 if (existingId) {
   watchRequest(existingId);
 }
 
+if (!hasValidRoom) {
+  blockCalling(
+    "هذا الرابط غير صالح. يرجى مسح رمز QR الموجود داخل الغرفة مرة أخرى."
+  );
+} else if (!dept) {
+  blockCalling(
+    "لا يوجد قسم مرتبط بهذه الغرفة حالياً. يرجى مراجعة إعدادات الأقسام."
+  );
+}
+
 callBtn.addEventListener("click", async () => {
 
   if (callBtn.disabled) return;
+
+  if (!hasValidRoom) {
+    alert("الرابط غير صالح. يرجى مسح رمز QR الصحيح للغرفة.");
+    return;
+  }
 
   if (!dept) {
     alert(
@@ -104,10 +128,12 @@ callBtn.addEventListener("click", async () => {
         }
       );
 
-    localStorage.setItem(
-      STORAGE_KEY,
-      docRef.id
-    );
+    if (STORAGE_KEY) {
+      localStorage.setItem(
+        STORAGE_KEY,
+        docRef.id
+      );
+    }
 
     watchRequest(docRef.id);
 
@@ -151,9 +177,11 @@ function watchRequest(requestId) {
 
           setTimeout(() => {
 
-            localStorage.removeItem(
-              STORAGE_KEY
-            );
+            if (STORAGE_KEY) {
+              localStorage.removeItem(
+                STORAGE_KEY
+              );
+            }
 
             stepper.classList.remove(
               "visible"
@@ -173,6 +201,31 @@ function watchRequest(requestId) {
 
       }
     );
+}
+
+function blockCalling(message) {
+  callBtn.disabled = true;
+  callBtn.classList.remove("waiting");
+  callBtnText.textContent = "غير متاح";
+  stepper.classList.remove("visible");
+  statusLine.textContent = message;
+  statusTime.textContent = "";
+}
+
+function configureRoomLink(linkEl, pagePath) {
+  if (!linkEl) return;
+
+  if (hasValidRoom) {
+    linkEl.href =
+      `${pagePath}?room=${encodeURIComponent(room)}`;
+    linkEl.classList.remove("disabled");
+    linkEl.removeAttribute("aria-disabled");
+    return;
+  }
+
+  linkEl.href = "#";
+  linkEl.classList.add("disabled");
+  linkEl.setAttribute("aria-disabled", "true");
 }
 
 function renderStatus(data) {
@@ -200,4 +253,48 @@ function renderStatus(data) {
     if (i < currentIndex)
       node.classList.add("done");
 
-    if (i =
+    if (i === currentIndex) {
+      node.classList.add("active");
+      labels[i].classList.add("active");
+    }
+
+    if (i < currentIndex)
+      labels[i].classList.add("active");
+
+  });
+
+  const formatTime = (ts) =>
+    ts && typeof ts.toDate === "function"
+      ? ts.toDate().toLocaleString("ar", {
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        })
+      : "";
+
+  if (data.status === "sent") {
+    statusLine.textContent = "تم إرسال الطلب للممرضة";
+    statusTime.textContent = data.createdAt
+      ? `وقت الإرسال: ${formatTime(data.createdAt)}`
+      : "";
+    callBtnText.textContent = "تم الإرسال";
+  } else if (data.status === "received") {
+    statusLine.textContent = "الممرضة استلمت الطلب";
+    statusTime.textContent = data.receivedAt
+      ? `وقت الاستلام: ${formatTime(data.receivedAt)}`
+      : "";
+    callBtnText.textContent = "قيد التنفيذ";
+  } else if (data.status === "done") {
+    statusLine.textContent = "تم تنفيذ الطلب";
+    statusTime.textContent = data.doneAt
+      ? `وقت التنفيذ: ${formatTime(data.doneAt)}`
+      : "";
+    callBtnText.textContent = "تم التنفيذ";
+  } else {
+    statusLine.textContent = "";
+    statusTime.textContent = "";
+  }
+
+}
+
