@@ -2,6 +2,7 @@ import { db } from "./firebase-config.js";
 import {
   addDoc,
   collection,
+  doc,
   onSnapshot,
   orderBy,
   query,
@@ -23,6 +24,8 @@ const statusTime    = document.getElementById("statusTime");
 
 roomBadge.textContent = room || "؟";
 
+const ORDER_STORAGE_KEY = `activeCafeteriaOrder_room_${room}`;
+
 const cart = new Map();
 let availableProducts = [];
 let categories = [];            // loaded from Firestore
@@ -32,6 +35,11 @@ if (!hasValidRoom) {
   sendOrderBtn.disabled = true;
   statusLine.textContent = "رابط الغرفة غير صالح. يرجى مسح QR الصحيح.";
 } else {
+  const existingOrderId = localStorage.getItem(ORDER_STORAGE_KEY);
+  if (existingOrderId) {
+    redirectToOrderStatus(existingOrderId);
+  }
+
   listenForCategories();
   listenForProducts();
 }
@@ -223,7 +231,7 @@ async function submitOrder() {
   sendOrderBtn.textContent = "جارِ الإرسال...";
 
   try {
-    await addDoc(collection(db, "cafeteriaOrders"), {
+    const orderRef = await addDoc(collection(db, "cafeteriaOrders"), {
       room, items, total, note,
       status: "new",
       receivedBy: null,
@@ -232,16 +240,8 @@ async function submitOrder() {
       doneAt: null
     });
 
-    cart.clear();
-    orderNote.value = "";
-    updateTotal();
-    renderProducts();
-
-    statusLine.textContent = "✅ تم إرسال طلب الكافتيريا بنجاح";
-    statusTime.textContent = new Date().toLocaleString("ar", {
-      month: "short", day: "numeric",
-      hour: "2-digit", minute: "2-digit"
-    });
+    localStorage.setItem(ORDER_STORAGE_KEY, orderRef.id);
+    redirectToOrderStatus(orderRef.id);
   } catch (err) {
     console.error(err);
     alert("تعذر إرسال الطلب");
@@ -256,3 +256,10 @@ function escapeHtml(str) {
   div.textContent = str;
   return div.innerHTML;
 }
+
+function redirectToOrderStatus(orderId) {
+  const target =
+    `cafeteria-order-status.html?room=${encodeURIComponent(room)}&order=${encodeURIComponent(orderId)}`;
+  window.location.href = target;
+}
+

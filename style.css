@@ -381,6 +381,174 @@ h1 {
   vertical-align: middle;
 }
 
+.cafeteria-order-status-head {
+  display: grid;
+  gap: 10px;
+}
+
+.cafeteria-status-steps {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 18px;
+  margin-bottom: 4px;
+}
+
+.cafeteria-status-step {
+  flex: 1;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.cafeteria-step-node {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  background: var(--surface);
+  transition: all 0.25s ease;
+}
+
+.cafeteria-step-node.active {
+  background: var(--amber);
+  border-color: var(--amber);
+  box-shadow: 0 0 0 5px rgba(217,138,61,0.15);
+}
+
+.cafeteria-step-node.done {
+  background: var(--teal-dark);
+  border-color: var(--teal-dark);
+}
+
+.cafeteria-step-label {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.cafeteria-step-label.active {
+  color: var(--teal-dark);
+  font-weight: 700;
+}
+
+.cafeteria-step-line {
+  flex: 0.6;
+  height: 2px;
+  background: var(--line);
+  margin-top: 10px;
+}
+
+.cafeteria-order-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+
+.cafeteria-order-badge.new {
+  background: rgba(217,138,61,0.15);
+  color: #9a5b14;
+}
+
+.cafeteria-order-badge.preparing {
+  background: rgba(46,110,103,0.14);
+  color: var(--teal-dark);
+}
+
+.cafeteria-order-badge.done {
+  background: rgba(30,74,70,0.14);
+  color: var(--teal-dark);
+}
+
+.cafeteria-progress-wrap {
+  margin-top: 18px;
+  padding: 14px 16px;
+  background: #f8f6f0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.cafeteria-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  margin-bottom: 10px;
+}
+
+.cafeteria-progress-track {
+  width: 100%;
+  height: 12px;
+  background: #e8e3d8;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.cafeteria-progress-bar {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--amber) 0%, var(--teal) 100%);
+  border-radius: 999px;
+  transition: width 1s linear;
+}
+
+.cafeteria-eta-text {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.cafeteria-order-items {
+  display: grid;
+  gap: 10px;
+}
+
+.cafeteria-order-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.cafeteria-order-item-name {
+  font-weight: 700;
+  color: var(--teal-dark);
+}
+
+.cafeteria-order-item-price {
+  font-weight: 700;
+  color: var(--teal-dark);
+  white-space: nowrap;
+}
+
+.cafeteria-order-summary {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: #f8f6f0;
+}
+
+.cafeteria-order-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 1rem;
+}
+
 /* --- Nurse dashboard --- */
 .nurse-header {
   width: 100%;

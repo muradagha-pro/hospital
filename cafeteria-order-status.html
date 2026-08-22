@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>حالة طلب الكافتيريا</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="label">الغرفة</div>
+    <div class="room-badge" id="roomBadge">--</div>
+  </div>
+  <div style="text-align:left;">
+    <div class="label">الخدمة</div>
+    <div class="dept-label">الكافتيريا</div>
+  </div>
+</div>
+
+<div class="card">
+  <h1>حالة طلب الكافتيريا</h1>
+  <p class="subtitle">يمكنك متابعة حالة الطلب حتى يتم تسليمه.</p>
+
+  <div class="cafeteria-order-status-head">
+    <div id="orderStatusBadge" class="cafeteria-order-badge new">تم استلام الطلب</div>
+    <div id="orderStatusText" class="status-line" style="margin-top:0;">جارِ تحميل حالة الطلب...</div>
+    <div id="orderStatusTime" class="status-time"></div>
+  </div>
+
+  <div class="cafeteria-status-steps">
+    <div class="cafeteria-status-step">
+      <div id="stepNode1" class="cafeteria-step-node"></div>
+      <div id="stepLabel1" class="cafeteria-step-label">تم الاستلام</div>
+    </div>
+    <div class="cafeteria-step-line"></div>
+    <div class="cafeteria-status-step">
+      <div id="stepNode2" class="cafeteria-step-node"></div>
+      <div id="stepLabel2" class="cafeteria-step-label">قيد التحضير</div>
+    </div>
+    <div class="cafeteria-step-line"></div>
+    <div class="cafeteria-status-step">
+      <div id="stepNode3" class="cafeteria-step-node"></div>
+      <div id="stepLabel3" class="cafeteria-step-label">تم التسليم</div>
+    </div>
+  </div>
+
+  <div class="cafeteria-progress-wrap">
+    <div class="cafeteria-progress-meta">
+      <span>الوقت المتوقع للتجهيز</span>
+      <span id="progressRemaining">5:00</span>
+    </div>
+    <div class="cafeteria-progress-track">
+      <div id="progressBar" class="cafeteria-progress-bar"></div>
+    </div>
+    <div id="etaText" class="cafeteria-eta-text">سنعرض لك الوقت المتوقع لوصول الطلب هنا.</div>
+  </div>
+
+  <div class="section-title" style="margin-top:22px;">محتويات الطلب</div>
+  <div id="orderItemsList" class="cafeteria-order-items"></div>
+
+  <div class="cafeteria-order-summary">
+    <div class="cafeteria-order-summary-row">
+      <span>الإجمالي</span>
+      <strong id="orderTotal">0.00 ل.س</strong>
+    </div>
+  </div>
+
+  <a id="backToOrderLink" href="#" class="patient-link-btn cafeteria" style="margin-top:16px; display:none;">العودة إلى قائمة الكافتيريا</a>
+</div>
+
+<script type="module" src="cafeteria-order-status.js"></script>
+
+</body>
+</html>
+
