@@ -4,6 +4,7 @@ import {
   addDoc,
   doc,
   onSnapshot,
+  runTransaction,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
@@ -54,6 +55,9 @@ const statusLine =
 const statusTime =
   document.getElementById("statusTime");
 
+const cancelCallBtn =
+  document.getElementById("cancelCallBtn");
+
 const nodes = [
   document.getElementById("node1"),
   document.getElementById("node2"),
@@ -71,6 +75,10 @@ const STORAGE_KEY = hasValidRoom
   : null;
 
 let unsubscribe = null;
+let autoCancelTimer = null;
+let currentRequestId = null;
+
+const AUTO_CANCEL_MS = 5 * 60 * 1000;
 
 const existingId =
   STORAGE_KEY
@@ -151,9 +159,15 @@ callBtn.addEventListener("click", async () => {
 
 });
 
+cancelCallBtn.addEventListener("click", async () => {
+  await cancelActiveRequest("patient");
+});
+
 function watchRequest(requestId) {
 
   if (unsubscribe) unsubscribe();
+
+  currentRequestId = requestId;
 
   callBtn.disabled = true;
   callBtn.classList.add("waiting");
@@ -171,32 +185,38 @@ function watchRequest(requestId) {
 
         renderStatus(data);
 
+        const cancellable =
+          data.status === "sent" || data.status === "received";
+        cancelCallBtn.style.display = cancellable ? "block" : "none";
+
+        if (data.status === "sent") {
+          scheduleAutoCancel(data.createdAt);
+        } else {
+          clearAutoCancel();
+        }
+
         if (data.status === "done") {
 
           callBtn.classList.remove("waiting");
 
           setTimeout(() => {
 
-            if (STORAGE_KEY) {
-              localStorage.removeItem(
-                STORAGE_KEY
-              );
-            }
-
-            stepper.classList.remove(
-              "visible"
-            );
-
-            callBtn.disabled = false;
-
-            callBtnText.textContent =
-              "استدعاء الممرضة";
-
-            if (unsubscribe)
-              unsubscribe();
+            releaseActiveRequest();
 
           }, 6000);
 
+        }
+
+        if (data.status === "cancelled") {
+          callBtn.classList.remove("waiting");
+          statusLine.textContent = "تم إلغاء الاستدعاء";
+          statusTime.textContent = data.cancelledAt
+            ? `وقت الإلغاء: ${formatTime(data.cancelledAt)}`
+            : "";
+
+          setTimeout(() => {
+            releaseActiveRequest();
+          }, 2500);
         }
 
       }
@@ -208,6 +228,7 @@ function blockCalling(message) {
   callBtn.classList.remove("waiting");
   callBtnText.textContent = "غير متاح";
   stepper.classList.remove("visible");
+  cancelCallBtn.style.display = "none";
   statusLine.textContent = message;
   statusTime.textContent = "";
 }
@@ -263,16 +284,6 @@ function renderStatus(data) {
 
   });
 
-  const formatTime = (ts) =>
-    ts && typeof ts.toDate === "function"
-      ? ts.toDate().toLocaleString("ar", {
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit"
-        })
-      : "";
-
   if (data.status === "sent") {
     statusLine.textContent = "تم إرسال الطلب للممرضة";
     statusTime.textContent = data.createdAt
@@ -291,10 +302,100 @@ function renderStatus(data) {
       ? `وقت التنفيذ: ${formatTime(data.doneAt)}`
       : "";
     callBtnText.textContent = "تم التنفيذ";
+  } else if (data.status === "cancelled") {
+    statusLine.textContent = "تم إلغاء الاستدعاء";
+    statusTime.textContent = data.cancelledAt
+      ? `وقت الإلغاء: ${formatTime(data.cancelledAt)}`
+      : "";
+    callBtnText.textContent = "تم الإلغاء";
   } else {
     statusLine.textContent = "";
     statusTime.textContent = "";
   }
 
+}
+
+function formatTime(ts) {
+  return ts && typeof ts.toDate === "function"
+    ? ts.toDate().toLocaleString("ar", {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      })
+    : "";
+}
+
+function scheduleAutoCancel(createdAt) {
+  clearAutoCancel();
+
+  if (!createdAt || typeof createdAt.toDate !== "function") return;
+
+  const elapsed = Date.now() - createdAt.toDate().getTime();
+  const remaining = AUTO_CANCEL_MS - elapsed;
+
+  if (remaining <= 0) {
+    cancelActiveRequest("timeout");
+    return;
+  }
+
+  autoCancelTimer = setTimeout(() => {
+    cancelActiveRequest("timeout");
+  }, remaining);
+}
+
+function clearAutoCancel() {
+  if (autoCancelTimer) {
+    clearTimeout(autoCancelTimer);
+    autoCancelTimer = null;
+  }
+}
+
+async function cancelActiveRequest(cancelledBy) {
+  if (!currentRequestId) return;
+
+  cancelCallBtn.disabled = true;
+  try {
+    const ref = doc(db, "callRequests", currentRequestId);
+
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists()) return;
+
+      const status = snap.data().status;
+      if (status === "done" || status === "cancelled") return;
+
+      tx.update(ref, {
+        status: "cancelled",
+        cancelledAt: serverTimestamp(),
+        cancelledBy,
+      });
+    });
+  } catch (err) {
+    console.error(err);
+    alert("تعذر إلغاء الاستدعاء حالياً");
+  } finally {
+    cancelCallBtn.disabled = false;
+  }
+}
+
+function releaseActiveRequest() {
+  clearAutoCancel();
+
+  if (STORAGE_KEY) {
+    localStorage.removeItem(STORAGE_KEY);
+  }
+
+  stepper.classList.remove("visible");
+  callBtn.disabled = false;
+  callBtn.classList.remove("waiting");
+  callBtnText.textContent = "استدعاء الممرضة";
+  cancelCallBtn.style.display = "none";
+  currentRequestId = null;
+
+  if (unsubscribe) {
+    unsubscribe();
+    unsubscribe = null;
+  }
 }
 
