@@ -25,8 +25,6 @@ messaging.onBackgroundMessage((payload) => {
 
   self.registration.showNotification(title, {
     body,
-    icon:  "/icon-192.png",
-    badge: "/icon-192.png",
     tag,
     vibrate: [300, 100, 300, 100, 300],
     requireInteraction: true, // يبقى التنبيه حتى يُغلق يدوياً
