@@ -24,13 +24,15 @@ async function getTokens(type, dept) {
 // مساعد: إرسال إشعار FCM
 // ─────────────────────────────────────────────
 async function sendPush(tokens, title, body, data = {}) {
-  if (tokens.length === 0) {
+  const uniqueTokens = [...new Set(tokens)];
+
+  if (uniqueTokens.length === 0) {
     console.log("FCM: لا توجد توكنات مسجّلة");
     return;
   }
 
   const response = await messaging.sendEachForMulticast({
-    tokens,
+    tokens: uniqueTokens,
     data: Object.fromEntries(
       Object.entries({ ...data, title, body }).map(([k, v]) => [k, String(v)])
     ),
@@ -46,13 +48,13 @@ async function sendPush(tokens, title, body, data = {}) {
     },
   });
 
-  console.log(`FCM: ${response.successCount}/${tokens.length} نجح`);
+  console.log(`FCM: ${response.successCount}/${uniqueTokens.length} نجح`);
 
   // احذف التوكنات المنتهية الصلاحية تلقائياً
   const stale = [];
   response.responses.forEach((r, i) => {
     if (!r.success && r.error?.code === "messaging/registration-token-not-registered") {
-      stale.push(tokens[i]);
+      stale.push(uniqueTokens[i]);
     }
   });
 

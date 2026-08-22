@@ -9,9 +9,14 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging.js";
 import { db } from "./firebase-config.js";
 import {
+  collection,
+  deleteDoc,
   doc,
+  getDocs,
+  query,
   setDoc,
-  serverTimestamp
+  serverTimestamp,
+  where
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
 // ─────────────────────────────────────────────────────────
@@ -22,6 +27,18 @@ const VAPID_KEY = "BMDBwMIwOXtJ9XHPfs3n2IkWaioythnsSb_0VQ4EpkNHi-e5LeoOoF7oEpeHt
 // ─────────────────────────────────────────────────────────
 
 let _messaging = null;
+const DEVICE_ID_KEY = "fcmDeviceId";
+
+function getDeviceId() {
+  let id = localStorage.getItem(DEVICE_ID_KEY);
+  if (!id) {
+    id = (typeof crypto !== "undefined" && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : `dev-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    localStorage.setItem(DEVICE_ID_KEY, id);
+  }
+  return id;
+}
 
 function getMsg() {
   if (!_messaging) _messaging = getMessaging(app);
@@ -61,11 +78,26 @@ export async function registerFCM(meta) {
     if (!token) return { permission, tokenSaved: false };
 
     // حفظ/تحديث التوكن في Firestore (التوكن نفسه كمعرّف للمستند)
+    const deviceId = getDeviceId();
+
     await setDoc(doc(db, "fcmTokens", token), {
       ...meta,
+      deviceId,
       token,
       updatedAt: serverTimestamp(),
     }, { merge: true });
+
+    // نظّف أي توكنات قديمة لنفس الجهاز/السياق لتفادي تنبيهات مكررة.
+    const filters = [
+      where("type", "==", meta.type),
+      where("deviceId", "==", deviceId),
+    ];
+    if (meta.dept) filters.push(where("dept", "==", meta.dept));
+    if (meta.name) filters.push(where("name", "==", meta.name));
+
+    const sameContext = await getDocs(query(collection(db, "fcmTokens"), ...filters));
+    const stale = sameContext.docs.filter((d) => d.id !== token);
+    await Promise.all(stale.map((d) => deleteDoc(doc(db, "fcmTokens", d.id))));
 
     console.log("FCM ✓ تم تسجيل الجهاز");
     return { permission, tokenSaved: true };
