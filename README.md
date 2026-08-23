@@ -1,147 +1,109 @@
-# نظام استدعاء الممرضة — دليل التشغيل خطوة بخطوة
+# Hospital Call Request System — نظام استدعاء الممرضة
 
-## شو صار موجود بالنظام هلق
+## 📚 Choose Your Language / اختر لغتك
 
-- **صفحة المريض** (`patient.html?room=204`) — زر استدعاء + حالة حية.
-- **صفحة الممرضة** (`nurse.html?dept=internal`) — خاصة بكل قسم، دخول بالاسم فقط، جرس صوتي + اهتزاز يتكرر لين الاستلام، إشعارات متصفح اختيارية، تبويب "سجل اليوم" مع إمكانية إضافة/تعديل ملاحظة على أي طلب.
-- **صفحة الإدارة** (`admin.html`) — إحصائيات مباشرة: إجمالي الاستدعاءات، المنفذة، المعلقة، متوسط وقت الاستجابة العام وحسب كل قسم، وكل ملاحظات الممرضات على الطلبات. **مفتوحة حالياً بدون اسم مستخدم أو كلمة مرور** (تفصيل الأمان بالأسفل).
+### English Version
+**👉 [Read Full Documentation in English](README_EN.md)**
 
-## كيف يتحدد القسم؟
-
-**تلقائياً حسب رقم الغرفة** — ما في حاجة لأي إعداد إضافي وقت إنشاء رابط QR للمريض. الأقسام الستة ومجالات غرفها معرّفة بملف واحد: **`departments.js`**:
-
-| القسم | مجال أرقام الغرف |
-|---|---|
-| الطوارئ | 101 – 199 |
-| الباطنية | 201 – 299 |
-| الجراحة | 301 – 399 |
-| الأطفال | 401 – 499 |
-| النسائية والولادة | 501 – 599 |
-| العناية المركزة | 601 – 699 |
-
-**لو أسماء الأقسام الحقيقية أو أرقام الغرف مختلفة عندكم بالمستشفى**، صار التعديل من صفحة إدارة الأقسام مباشرة: `admin-departments.html` (اسم القسم + رمز القسم + مجال الغرف). إذا ما في إعدادات أقسام مخزنة بعد، النظام يستخدم قيم `departments.js` الافتراضية تلقائياً.
+Complete guide to all pages and processes of the Hospital Call Request System, including:
+- Patient page for requesting nurse assistance
+- Nurse station page for managing requests
+- Admin dashboard with real-time analytics
+- Department management
+- Cafeteria ordering system
+- Deployment and setup instructions
+- Security recommendations
 
 ---
 
-## الخطوات 1-4: نفس ما سبق (Firebase + رفع الموقع)
+### النسخة العربية
+**👈 [اقرأ الدليل الكامل بالعربية](README_AR.md)**
 
-إذا وصلتي لهون معناتها خلصتي إعداد Firebase وربط `firebase-config.js` ورفع الموقع على Netlify. لو لسا، ارجعي للنسخة السابقة من هالدليل بمحادثتنا، أو اسأليني وبعيدلك الخطوات.
-
----
-
-## الخطوة 5: توليد رموز QR
-
-### أ) رموز الغرف (للمرضى)
-رابط كل غرفة بالصيغة:
-```
-https://موقعك.netlify.app/patient.html?room=204
-```
-القسم بيتحدد تلقائياً من رقم الغرفة (204 → الباطنية). ولّدي رمز QR لكل رقم غرفة وحطيه بالغرفة المطابقة.
-
-### ب) رموز محطات الأقسام (للممرضات)
-كل قسم إله **رمز QR واحد ثابت** (يُعلّق بمحطة التمريض الخاصة بالقسم)، بالصيغة:
-```
-https://موقعك.netlify.app/nurse.html?dept=emergency
-https://موقعك.netlify.app/nurse.html?dept=internal
-https://موقعك.netlify.app/nurse.html?dept=surgery
-https://موقعك.netlify.app/nurse.html?dept=pediatrics
-https://موقعك.netlify.app/nurse.html?dept=obgyn
-https://موقعك.netlify.app/nurse.html?dept=icu
-```
-(القيم `emergency`, `internal`... هي نفس `id` المعرّف بملف `departments.js`)
-
-ولّدي 6 رموز QR بس (وحدة لكل قسم)، وعلّقي كل رمز بمحطة التمريض المطابقة. الممرضة تمسح رمز قسمها بداية دوامها، تكتب اسمها، وتدخل مباشرة — رح تشوف بس طلبات قسمها.
+دليل شامل لجميع الصفحات والعمليات في نظام استدعاء الممرضة، يتضمن:
+- صفحة المريض لطلب مساعدة التمريض
+- صفحة محطة التمريض لإدارة الطلبات
+- لوحة التحكم الإدارية مع التحليلات الفورية
+- إدارة الأقسام
+- نظام طلب الكافتيريا
+- تعليمات النشر والإعداد
+- توصيات الأمان
 
 ---
 
-## الخطوة 6: صفحة الإدارة
+## System Overview / نظرة عامة على النظام
 
-رابط ثابت وما بيتغير:
-```
-https://موقعك.netlify.app/admin.html
-```
+### What's Inside / المكونات الرئيسية
 
-فيها:
-- تبديل بين "اليوم" و"آخر 7 أيام".
-- بطاقات ملخص: إجمالي الاستدعاءات، المنفذة، المعلقة، متوسط وقت الاستجابة العام.
-- تفصيل لكل قسم: عدد الاستدعاءات ومتوسط وقت استجابته الخاص.
-- كل ملاحظات الممرضات على الطلبات، مرتبة بالأحدث أولاً.
+**Core Features:**
+- Real-time nurse call request system
+- Multi-department support with automatic department assignment
+- Live status tracking for patients
+- Admin dashboard with analytics
+- Cafeteria ordering and tracking system
+- Patient feedback/complaint system
+- Customizable department configuration
 
-### صفحة إدارة الأقسام (جديدة)
-
-رابط ثابت:
-```
-https://موقعك.netlify.app/admin-departments.html
-```
-
-من خلالها تقدر الإدارة:
-- إضافة قسم جديد.
-- حذف قسم موجود.
-- تحديد الغرف التابعة لكل قسم (من غرفة / إلى غرفة).
-
-### ⚠️ تنبيه أمان مهم
-حسب طلبك، صفحة الإدارة **مفتوحة لأي حد إله الرابط**، بدون كلمة مرور. هذا مقبول للتجربة، بس **قبل الاستخدام الفعلي بمستشفى حقيقي**، لازم تُحمى هالصفحة (بيانات المرضى والأداء حساسة). أسهل حل: إضافة تسجيل دخول بسيط عبر Firebase Authentication (بريد إلكتروني وكلمة مرور لحسابات الإدارة فقط) — قوليلي لما توصلي لهاي المرحلة وبضيفها.
+**الميزات الأساسية:**
+- نظام استدعاء ممرضة فوري
+- دعم أقسام متعددة مع تعيين تلقائي
+- تتبع حالة فوري للمرضى
+- لوحة تحكم إدارية مع تحليلات
+- نظام طلب الكافتيريا والتتبع
+- نظام تعليقات/شكاوى المرضى
+- تكوين مخصص للأقسام
 
 ---
 
-## قبل الاستخدام الفعلي: تأمين القاعدة
+## Quick Start / البدء السريع
 
-بـ **Firestore Database → Rules**، استبدلي القواعد بهاي (تسمح بإنشاء وتحديث الطلبات بس، بدون حذف):
+### For English-speaking users / للمستخدمين الناطقين بالإنجليزية
+Open **[README_EN.md](README_EN.md)** for complete setup instructions and detailed explanations of every page.
 
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /callRequests/{requestId} {
-      allow read: if true;
-      allow create: if request.resource.data.status == "sent"
-                    && request.resource.data.room is string
-                    && request.resource.data.department is string;
-      allow update: if request.resource.data.status in ["received", "done"]
-                    || ("note" in request.resource.data);
-      allow delete: if false;
-    }
-  }
-}
-```
+### للمستخدمين الناطقين بالعربية
+افتح **[README_AR.md](README_AR.md)** للحصول على تعليمات الإعداد الكاملة والشروحات التفصيلية لكل صفحة.
 
 ---
 
-## فهارس Firestore المطلوبة (مهم)
+## Key Pages / الصفحات الرئيسية
 
-في `nurse.js` في استعلامات تحتاج **Composite Indexes**. تمت إضافتها بملف:
-
-`firestore.indexes.json`
-
-إذا كنتِ تستخدمين Firebase CLI، انشري الفهارس بالأمر:
-
-```bash
-firebase deploy --only firestore:indexes
-```
-
-إذا ما بتستخدمي CLI، افتحي رسالة الخطأ التي تظهر في المتصفح عند أول تشغيل، واضغطي الرابط الذي يعطيه Firebase لإنشاء الفهرس تلقائياً.
-
----
-
-## الكافتيريا (تمت إضافتها)
-
-- **إدارة المنتجات:** `cafeteria-products.html`
-- **صفحة طلب المريض:** `cafeteria-order.html?room=201` (بدّلي رقم الغرفة حسب QR)
-- **لوحة الكافتيريا:** `cafeteria.html`
-
-### تسلسل التشغيل المقترح
-
-1. افتحي `cafeteria-products.html` وأضيفي المنتجات أولاً.
-2. استخدمي رابط QR للمريض بصيغة:
-   `https://موقعك.netlify.app/cafeteria-order.html?room=201`
-3. افتحي `cafeteria.html` على جهاز الكافتيريا لمتابعة الطلبات وتحديث حالتها.
+| Page | URL | Purpose |
+|------|-----|---------|
+| Patient Room | `patient.html?room=XXX` | Patient call request |
+| Nurse Station | `nurse.html?dept=XXX` | Manage incoming requests |
+| Admin Dashboard | `admin.html` | View analytics & statistics |
+| Department Admin | `admin-departments.html` | Configure departments |
+| Cafeteria Products | `cafeteria-products.html` | Manage menu items |
+| Cafeteria Order | `cafeteria-order.html?room=XXX` | Patient ordering interface |
+| Cafeteria Status | `cafeteria-order-status.html` | Order tracking |
+| Cafeteria Management | `cafeteria.html` | Fulfill orders |
+| Feedback Form | `feedback.html?room=XXX` | Patient feedback |
 
 ---
 
-## شو بعدين؟
+| الصفحة | الرابط | الغرض |
+|--------|--------|--------|
+| غرفة المريض | `patient.html?room=XXX` | طلب استدعاء الممرضة |
+| محطة التمريض | `nurse.html?dept=XXX` | إدارة الطلبات الواردة |
+| لوحة الإدارة | `admin.html` | عرض التحليلات والإحصائيات |
+| إدارة الأقسام | `admin-departments.html` | تكوين الأقسام |
+| منتجات الكافتيريا | `cafeteria-products.html` | إدارة القائمة |
+| طلب الكافتيريا | `cafeteria-order.html?room=XXX` | واجهة طلب المريض |
+| حالة الطلب | `cafeteria-order-status.html` | تتبع الطلب |
+| إدارة الكافتيريا | `cafeteria.html` | تنفيذ الطلبات |
+| نموذج التعليقات | `feedback.html?room=XXX` | تعليقات المريض |
 
-1. **تسجيل دخول حقيقي لصفحة الإدارة** عبر Firebase Authentication.
-2. **تصعيد تلقائي** لو ما استلم أحد الطلب خلال دقيقتين (يحتاج Cloud Function بسيطة).
-3. **لوحة صلاحيات** لتحديد من يقدر يعدّل الأقسام ومن يقدر يشوف الإحصائيات فقط.
+---
 
-قولّي أي جزء بدك نبنيه بعدين.
+## Support
+
+For detailed information, deployment instructions, and troubleshooting, please refer to:
+- **English:** [README_EN.md](README_EN.md)
+- **Arabic:** [README_AR.md](README_AR.md)
+
+للحصول على معلومات مفصلة وتعليمات النشر واستكشاف الأخطاء، يرجى الرجوع إلى:
+- **الإنجليزية:** [README_EN.md](README_EN.md)
+- **العربية:** [README_AR.md](README_AR.md)
+
+---
+
+**Enjoy your Hospital Call Request System!** / **استمتع بنظام استدعاء الممرضة الخاص بك!**
