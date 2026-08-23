@@ -12,17 +12,13 @@
 
   <div class="admin-title">لوحة إحصائيات الإدارة</div>
 
-  <a href="admin-departments.html" style="display:inline-block; margin:8px 0 14px; text-decoration:none;">
-    <button class="action-btn">إدارة الأقسام</button>
-  </a>
-
-  <div class="admin-subtitle">
-    استدعاءات التمريض — الاستجابة وأوقاتها لكل قسم
-  </div>
-
   <div class="range-tabs">
     <button class="tab-btn active" id="rangeToday">
       اليوم
+    </button>
+
+    <button class="tab-btn" id="rangeYesterday">
+      البارحة
     </button>
 
     <button class="tab-btn" id="rangeWeek">
@@ -39,6 +35,10 @@
   </div>
 
   <div id="content" style="display:none;">
+
+    <div class="section-title">
+      إحصائيات التمريض
+    </div>
 
     <div id="callSummaryRow" class="dept-row" style="margin-bottom:14px;">
       <div class="dept-row-top">
@@ -61,7 +61,7 @@
 
     <div id="cafeSummaryRow" class="dept-row" style="margin-bottom:14px;">
       <div class="dept-row-top">
-        <span class="dept-row-name">طلبات اليوم: <span id="cafeStatTotal">0</span></span>
+        <span class="dept-row-name">إجمالي الطلبات: <span id="cafeStatTotal">0</span></span>
         <span class="dept-row-stats">إيراد الطلبات: <span id="cafeStatRevenue">0.00 ل.س</span></span>
       </div>
       <div class="dept-row-hint">اضغط لعرض إجمالي طلبات الكافتيريا حسب الغرف</div>
@@ -114,6 +114,10 @@
         </div>
       </div>
     </div>
+
+    <a href="admin-departments.html" style="display:block; margin-top:18px; text-decoration:none;">
+      <button class="action-btn" style="width:100%;">إدارة الأقسام</button>
+    </a>
 
   </div>
 

@@ -10,6 +10,7 @@ import {
 import { DEPARTMENTS, refreshDepartments } from "./departments.js";
 
 const rangeToday = document.getElementById("rangeToday");
+const rangeYesterday = document.getElementById("rangeYesterday");
 const rangeWeek = document.getElementById("rangeWeek");
 const loadingMsg = document.getElementById("loadingMsg");
 const content = document.getElementById("content");
@@ -52,6 +53,7 @@ let openCallRoomKeyByDept = {};
 let openCafeRoomKey = null;
 
 rangeToday.addEventListener("click", () => setRange("today"));
+rangeYesterday.addEventListener("click", () => setRange("yesterday"));
 rangeWeek.addEventListener("click", () => setRange("week"));
 
 commentsSummaryRow.addEventListener("click", (event) => {
@@ -91,6 +93,7 @@ async function initAdminPage() {
 function setRange(range) {
   currentRange = range;
   rangeToday.classList.toggle("active", range === "today");
+  rangeYesterday.classList.toggle("active", range === "yesterday");
   rangeWeek.classList.toggle("active", range === "week");
   openCallDeptKey = null;
   openCallRoomKeyByDept = {};
@@ -105,19 +108,9 @@ function loadData() {
   loadingMsg.style.display = "block";
   content.style.display = "none";
 
-  const start = new Date();
-  if (currentRange === "today") {
-    start.setHours(0, 0, 0, 0);
-  } else {
-    start.setDate(start.getDate() - 7);
-  }
-  const startTimestamp = Timestamp.fromDate(start);
+  const { startTimestamp, endTimestamp } = getSelectedRange();
 
-  const callsQuery = query(
-    collection(db, "callRequests"),
-    where("createdAt", ">=", startTimestamp),
-    orderBy("createdAt", "desc")
-  );
+  const callsQuery = buildRangeQuery("callRequests", startTimestamp, endTimestamp);
 
   callsUnsubscribe = onSnapshot(callsQuery, (snapshot) => {
     latestRequests = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -131,7 +124,58 @@ function loadData() {
     console.error(err);
   });
 
-  loadCafeteriaData();
+  loadCafeteriaData(startTimestamp, endTimestamp);
+}
+
+function getSelectedRange() {
+  const now = new Date();
+
+  if (currentRange === "today") {
+    const start = new Date(now);
+    start.setHours(0, 0, 0, 0);
+    return {
+      startTimestamp: Timestamp.fromDate(start),
+      endTimestamp: null,
+    };
+  }
+
+  if (currentRange === "yesterday") {
+    const start = new Date(now);
+    start.setDate(start.getDate() - 1);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(now);
+    end.setHours(0, 0, 0, 0);
+
+    return {
+      startTimestamp: Timestamp.fromDate(start),
+      endTimestamp: Timestamp.fromDate(end),
+    };
+  }
+
+  const weekStart = new Date(now);
+  weekStart.setDate(weekStart.getDate() - 7);
+  return {
+    startTimestamp: Timestamp.fromDate(weekStart),
+    endTimestamp: null,
+  };
+}
+
+function buildRangeQuery(collectionName, startTimestamp, endTimestamp) {
+  if (endTimestamp) {
+    return query(
+      collection(db, collectionName),
+      where("createdAt", ">=", startTimestamp),
+      where("createdAt", "<", endTimestamp),
+      orderBy("createdAt", "desc")
+    );
+  }
+
+  return query(
+    collection(db, collectionName),
+    where("createdAt", ">=", startTimestamp),
+    orderBy("createdAt", "desc")
+  );
 }
 
 function renderCallSummary(requests) {
@@ -247,6 +291,14 @@ function renderCallBreakdownByDept(requests) {
               })
             : "--";
 
+          const responseDuration = (call.createdAt && call.receivedAt)
+            ? formatMinutes((call.receivedAt.toDate() - call.createdAt.toDate()) / 1000 / 60)
+            : "لم تُستلم بعد";
+
+          const executionDuration = (call.receivedAt && call.doneAt)
+            ? formatMinutes((call.doneAt.toDate() - call.receivedAt.toDate()) / 1000 / 60)
+            : (call.status === "done" ? "--" : "لم يُنفّذ بعد");
+
           const callItem = document.createElement("div");
           callItem.className = "detail-item";
           callItem.style.marginTop = "8px";
@@ -256,7 +308,9 @@ function renderCallBreakdownByDept(requests) {
               <span class="detail-room">${time}</span>
             </div>
             <div class="detail-times">
-              <span>${escapeHtml(call.departmentName || info.name)}</span>
+              <span>وقت الطلب: ${time}</span>
+              <span>مدة الاستجابة: ${responseDuration}</span>
+              <span>مدة التنفيذ: ${executionDuration}</span>
               ${call.receivedBy ? `<span>بواسطة ${escapeHtml(call.receivedBy)}</span>` : ""}
             </div>
           `;
@@ -339,16 +393,8 @@ function renderNurseNotes(requests) {
   });
 }
 
-function loadCafeteriaData() {
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-  const startTimestamp = Timestamp.fromDate(start);
-
-  const q = query(
-    collection(db, "cafeteriaOrders"),
-    where("createdAt", ">=", startTimestamp),
-    orderBy("createdAt", "desc")
-  );
+function loadCafeteriaData(startTimestamp, endTimestamp) {
+  const q = buildRangeQuery("cafeteriaOrders", startTimestamp, endTimestamp);
 
   cafeUnsubscribe = onSnapshot(q, (snapshot) => {
     latestCafeOrders = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -391,10 +437,11 @@ function renderCafeteriaByRoom(orders) {
   orders.forEach((o) => {
     const key = String(o.room || "غير محدد");
     if (!byRoom[key]) {
-      byRoom[key] = { count: 0, total: 0 };
+      byRoom[key] = { count: 0, total: 0, orders: [] };
     }
     byRoom[key].count += 1;
     byRoom[key].total += Number.isFinite(Number(o.total)) ? Number(o.total) : 0;
+    byRoom[key].orders.push(o);
   });
 
   Object.entries(byRoom)
@@ -413,19 +460,64 @@ function renderCafeteriaByRoom(orders) {
           <span class="dept-row-name">غرفة ${escapeHtml(roomKey)}</span>
           <span class="dept-row-stats">${info.count} طلب</span>
         </div>
-        <div class="dept-row-hint">اضغط لعرض إجمالي طلبات هذه الغرفة</div>
+        <div class="dept-row-hint">اضغط لعرض قائمة طلبات هذه الغرفة ضمن الفترة المحددة</div>
       `;
 
       const detail = document.createElement("div");
       detail.className = "dept-detail" + (openCafeRoomKey === roomKey ? " open" : "");
-      detail.innerHTML = `
-        <div class="detail-item" style="margin-top:8px;">
-          <div class="detail-times">
-            <span>عدد الطلبات: ${info.count}</span>
-            <span>إجمالي المبلغ: ${info.total.toFixed(2)} ل.س</span>
-          </div>
+
+      const summary = document.createElement("div");
+      summary.className = "detail-item";
+      summary.style.marginTop = "8px";
+      summary.innerHTML = `
+        <div class="detail-times">
+          <span>عدد الطلبات: ${info.count}</span>
+          <span>إجمالي المبلغ: ${info.total.toFixed(2)} ل.س</span>
         </div>
       `;
+      detail.appendChild(summary);
+
+      const sortedOrders = [...info.orders].sort((a, b) => {
+        const ta = a.createdAt && typeof a.createdAt.toMillis === "function" ? a.createdAt.toMillis() : 0;
+        const tb = b.createdAt && typeof b.createdAt.toMillis === "function" ? b.createdAt.toMillis() : 0;
+        return tb - ta;
+      });
+
+      sortedOrders.forEach((order) => {
+        const time = order.createdAt && typeof order.createdAt.toDate === "function"
+          ? order.createdAt.toDate().toLocaleString("ar", {
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit"
+            })
+          : "--";
+
+        const statusText =
+          order.status === "done" ? "تم التسليم" :
+          order.status === "preparing" ? "قيد التحضير" :
+          order.status === "cancelled" ? "تم الإلغاء" :
+          "طلب جديد";
+
+        const itemSummary = Array.isArray(order.items)
+          ? order.items.map((i) => `${i.name} x${i.qty}`).join("، ")
+          : "--";
+
+        const item = document.createElement("div");
+        item.className = "detail-item";
+        item.style.marginTop = "8px";
+        item.innerHTML = `
+          <div class="detail-item-top">
+            <span class="badge ${escapeHtml(order.status || "new")}">${statusText}</span>
+            <span class="detail-room">${time}</span>
+          </div>
+          <div class="detail-times">
+            <span>${escapeHtml(itemSummary)}</span>
+            <span>الإجمالي: ${Number(order.total || 0).toFixed(2)} ل.س</span>
+          </div>
+        `;
+        detail.appendChild(item);
+      });
 
       row.appendChild(detail);
       row.addEventListener("click", (event) => {

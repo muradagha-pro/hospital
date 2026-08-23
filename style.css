@@ -966,6 +966,11 @@ h1 {
   border: 1.5px solid var(--teal);
 }
 
+.action-btn.danger-btn {
+  background: #b73535;
+  color: #fff;
+}
+
 .empty-state {
   width: 100%;
   max-width: 640px;

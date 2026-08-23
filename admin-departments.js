@@ -20,6 +20,7 @@ const deptList = document.getElementById("deptList");
 const deptEmpty = document.getElementById("deptEmpty");
 
 let currentRows = [];
+let editingDocId = null;
 
 deptName.addEventListener("input", () => {
   if (deptId.value.trim()) return;
@@ -142,28 +143,155 @@ function renderDepartments(rows) {
       </div>
     `;
 
-    const actions = document.createElement("div");
-    actions.style.display = "flex";
-    actions.style.gap = "8px";
-    actions.style.justifyContent = "flex-end";
+    if (editingDocId !== row.docId) {
+      const actions = document.createElement("div");
+      actions.style.display = "flex";
+      actions.style.gap = "8px";
+      actions.style.justifyContent = "flex-end";
 
-    const del = document.createElement("button");
-    del.className = "action-btn note-finish-btn";
-    del.textContent = "حذف";
-    del.onclick = () => removeDepartment(row.docId, row.name || row.id || "");
+      const editBtn = document.createElement("button");
+      editBtn.className = "action-btn";
+      editBtn.textContent = "تعديل";
+      editBtn.onclick = () => {
+        editingDocId = row.docId;
+        renderDepartments(currentRows);
+      };
 
-    actions.appendChild(del);
-    card.appendChild(actions);
+      actions.appendChild(editBtn);
+      card.appendChild(actions);
+    }
+
+    if (editingDocId === row.docId) {
+      card.appendChild(buildEditor(row));
+    }
+
     deptList.appendChild(card);
   });
 }
 
+function buildEditor(row) {
+  const wrap = document.createElement("div");
+  wrap.style.marginTop = "12px";
+  wrap.style.paddingTop = "12px";
+  wrap.style.borderTop = "1px solid var(--line)";
+
+  const nameInput = document.createElement("input");
+  nameInput.type = "text";
+  nameInput.value = String(row.name || "");
+  nameInput.placeholder = "اسم القسم";
+  nameInput.style.cssText = "width:100%; padding:10px; border-radius:10px; border:1px solid var(--line); margin-bottom:8px;";
+
+  const roomsWrap = document.createElement("div");
+  roomsWrap.style.cssText = "display:flex; gap:8px; flex-wrap:wrap;";
+
+  const startInput = document.createElement("input");
+  startInput.type = "number";
+  startInput.min = "1";
+  startInput.value = String(Number(row.roomStart || ""));
+  startInput.placeholder = "من غرفة";
+  startInput.style.cssText = "flex:1; min-width:120px; padding:10px; border-radius:10px; border:1px solid var(--line);";
+
+  const endInput = document.createElement("input");
+  endInput.type = "number";
+  endInput.min = "1";
+  endInput.value = String(Number(row.roomEnd || ""));
+  endInput.placeholder = "إلى غرفة";
+  endInput.style.cssText = "flex:1; min-width:120px; padding:10px; border-radius:10px; border:1px solid var(--line);";
+
+  roomsWrap.appendChild(startInput);
+  roomsWrap.appendChild(endInput);
+
+  const actions = document.createElement("div");
+  actions.style.cssText = "display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; margin-top:10px;";
+
+  const saveBtn = document.createElement("button");
+  saveBtn.className = "action-btn done-btn";
+  saveBtn.textContent = "حفظ التعديلات";
+  saveBtn.onclick = async () => {
+    await updateDepartment(row, {
+      name: nameInput.value.trim(),
+      roomStart: Number(startInput.value),
+      roomEnd: Number(endInput.value),
+    });
+  };
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.className = "action-btn note-finish-btn";
+  cancelBtn.textContent = "إلغاء";
+  cancelBtn.onclick = () => {
+    editingDocId = null;
+    renderDepartments(currentRows);
+  };
+
+  const delBtn = document.createElement("button");
+  delBtn.className = "action-btn danger-btn";
+  delBtn.textContent = "حذف القسم";
+  delBtn.onclick = () => removeDepartment(row.docId, row.name || row.id || "");
+
+  actions.appendChild(saveBtn);
+  actions.appendChild(cancelBtn);
+  actions.appendChild(delBtn);
+
+  wrap.appendChild(nameInput);
+  wrap.appendChild(roomsWrap);
+  wrap.appendChild(actions);
+
+  return wrap;
+}
+
+async function updateDepartment(row, changes) {
+  const name = changes.name;
+  const start = changes.roomStart;
+  const end = changes.roomEnd;
+
+  if (!name) {
+    alert("يرجى إدخال اسم القسم");
+    return;
+  }
+
+  if (!Number.isFinite(start) || !Number.isFinite(end) || start <= 0 || end <= 0 || end < start) {
+    alert("يرجى إدخال مجال غرف صحيح");
+    return;
+  }
+
+  const roomOverlap = currentRows.find((r) => {
+    if (r.docId === row.docId) return false;
+    const rs = Number(r.roomStart);
+    const re = Number(r.roomEnd);
+    if (!Number.isFinite(rs) || !Number.isFinite(re)) return false;
+    return !(end < rs || start > re);
+  });
+
+  if (roomOverlap) {
+    alert(`هذا المجال يتداخل مع قسم: ${roomOverlap.name || roomOverlap.id}`);
+    return;
+  }
+
+  try {
+    await setDoc(doc(db, "departmentsConfig", row.docId), {
+      ...row,
+      name,
+      roomStart: start,
+      roomEnd: end,
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+    editingDocId = null;
+    await refreshDepartments();
+  } catch (err) {
+    console.error(err);
+    alert("تعذر حفظ التعديلات");
+  }
+}
+
 async function removeDepartment(docId, name) {
-  const ok = confirm(`حذف القسم: ${name} ؟`);
+  const ok = confirm(
+    `تحذير: سيتم حذف القسم "${name}" وستضيع بياناته المرتبطة بتوزيع الغرف.\n\nهل أنت متأكد من المتابعة؟`
+  );
   if (!ok) return;
 
   try {
     await deleteDoc(doc(db, "departmentsConfig", docId));
+    if (editingDocId === docId) editingDocId = null;
     await refreshDepartments();
   } catch (err) {
     console.error(err);
