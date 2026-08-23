@@ -848,8 +848,17 @@ h1 {
 .dept-row-name { font-weight: 700; }
 
 .dept-row-stats {
-  font-size: 0.82rem;
-  color: var(--muted);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--teal-dark);
+}
+
+.summary-count-big {
+  font-size: 1.7rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-inline-start: 4px;
+  color: var(--teal-dark);
 }
 
 .dept-bar-track {

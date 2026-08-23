@@ -8,7 +8,7 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
-import { departmentForRoom } from "./departments.js";
+import { departmentForRoom, refreshDepartments } from "./departments.js";
 
 // -------- تحديد رقم الغرفة والقسم --------
 const params = new URLSearchParams(window.location.search);
@@ -16,13 +16,12 @@ const params = new URLSearchParams(window.location.search);
 const room = (params.get("room") || "").trim();
 const hasValidRoom = /^\d+$/.test(room);
 
-const dept = hasValidRoom
+let dept = hasValidRoom
   ? departmentForRoom(room)
   : null;
 
 document.getElementById("roomBadge").textContent = room || "؟";
-document.getElementById("deptLabel").textContent =
-  dept ? dept.name : "غير محدد";
+updateDeptLabel();
 
 const feedbackLink =
   document.getElementById("feedbackLink");
@@ -89,15 +88,13 @@ if (existingId) {
   watchRequest(existingId);
 }
 
-if (!hasValidRoom) {
-  blockCalling(
-    "هذا الرابط غير صالح. يرجى مسح رمز QR الموجود داخل الغرفة مرة أخرى."
-  );
-} else if (!dept) {
-  blockCalling(
-    "لا يوجد قسم مرتبط بهذه الغرفة حالياً. يرجى مراجعة إعدادات الأقسام."
-  );
-}
+validateRoomAndDepartment();
+
+refreshDepartments().then(() => {
+  dept = hasValidRoom ? departmentForRoom(room) : null;
+  updateDeptLabel();
+  validateRoomAndDepartment();
+});
 
 callBtn.addEventListener("click", async () => {
 
@@ -231,6 +228,36 @@ function blockCalling(message) {
   cancelCallBtn.style.display = "none";
   statusLine.textContent = message;
   statusTime.textContent = "";
+}
+
+function updateDeptLabel() {
+  document.getElementById("deptLabel").textContent =
+    dept ? dept.name : "غير محدد";
+}
+
+function validateRoomAndDepartment() {
+  if (!hasValidRoom) {
+    blockCalling(
+      "هذا الرابط غير صالح. يرجى مسح رمز QR الموجود داخل الغرفة مرة أخرى."
+    );
+    return;
+  }
+
+  if (!dept) {
+    blockCalling(
+      "لا يوجد قسم مرتبط بهذه الغرفة حالياً. يرجى مراجعة إعدادات الأقسام."
+    );
+    return;
+  }
+
+  if (!currentRequestId) {
+    callBtn.disabled = false;
+    callBtn.classList.remove("waiting");
+    callBtnText.textContent = "استدعاء الممرضة";
+    stepper.classList.remove("visible");
+    statusLine.textContent = "";
+    statusTime.textContent = "";
+  }
 }
 
 function configureRoomLink(linkEl, pagePath) {

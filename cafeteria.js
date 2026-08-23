@@ -220,7 +220,68 @@ function renderOrders() {
   }
 
   ordersEmpty.style.display = "none";
+
+  if (activeTab === "done") {
+    renderDoneOrdersByRoom(items);
+    return;
+  }
+
   items.forEach((order) => ordersList.appendChild(buildOrderCard(order)));
+}
+
+function renderDoneOrdersByRoom(doneOrders) {
+  const byRoom = {};
+  doneOrders.forEach((o) => {
+    const key = String(o.room || "غير محدد");
+    if (!byRoom[key]) {
+      byRoom[key] = { count: 0, total: 0, orders: [] };
+    }
+    byRoom[key].count += 1;
+    byRoom[key].total += Number.isFinite(Number(o.total)) ? Number(o.total) : 0;
+    byRoom[key].orders.push(o);
+  });
+
+  const rooms = Object.entries(byRoom).sort((a, b) => {
+    const aa = Number(a[0]);
+    const bb = Number(b[0]);
+    if (Number.isFinite(aa) && Number.isFinite(bb)) return aa - bb;
+    return a[0].localeCompare(b[0], "ar");
+  });
+
+  rooms.forEach(([roomKey, info]) => {
+    const row = document.createElement("div");
+    row.className = "dept-row";
+
+    row.innerHTML = `
+      <div class="dept-row-top">
+        <span class="dept-row-name">غرفة ${escapeHtml(roomKey)}</span>
+        <span class="dept-row-stats">${info.count} طلب · ${info.total.toFixed(2)} ل.س</span>
+      </div>
+      <div class="dept-row-hint">اضغط لعرض إجمالي طلبات هذه الغرفة</div>
+    `;
+
+    const detail = document.createElement("div");
+    detail.className = "dept-detail";
+
+    detail.innerHTML = `
+      <div class="detail-item" style="margin-top:8px;">
+        <div class="detail-times">
+          <span>عدد الطلبات المنتهية اليوم: ${info.count}</span>
+          <span>إجمالي قيمة الطلبات: ${info.total.toFixed(2)} ل.س</span>
+        </div>
+      </div>
+    `;
+
+    row.appendChild(detail);
+    row.addEventListener("click", () => {
+      const willOpen = !detail.classList.contains("open");
+      document.querySelectorAll("#ordersList .dept-detail.open")
+        .forEach((el) => el.classList.remove("open"));
+      if (willOpen) detail.classList.add("open");
+    });
+
+    ordersList.appendChild(row);
+  });
 }
 
 function buildOrderCard(order) {

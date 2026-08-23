@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>إدارة الأقسام</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="card">
+  <h1>إدارة الأقسام</h1>
+  <p class="subtitle">إضافة/حذف الأقسام وتحديد الغرف التابعة لكل قسم.</p>
+
+  <div class="login-card" style="width:100%; max-width:640px; margin: 8px 0 18px;">
+    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+      <label style="flex:2; min-width:190px;">
+        <span class="label" style="display:block; margin-bottom:6px;">اسم القسم</span>
+        <input id="deptName" type="text" placeholder="مثال: الباطنية" style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--line);">
+      </label>
+
+      <label style="flex:1; min-width:130px;">
+        <span class="label" style="display:block; margin-bottom:6px;">رمز القسم</span>
+        <input id="deptId" type="text" placeholder="internal" style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--line);">
+      </label>
+
+      <label style="flex:1; min-width:120px;">
+        <span class="label" style="display:block; margin-bottom:6px;">من غرفة</span>
+        <input id="roomStart" type="number" min="1" placeholder="201" style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--line);">
+      </label>
+
+      <label style="flex:1; min-width:120px;">
+        <span class="label" style="display:block; margin-bottom:6px;">إلى غرفة</span>
+        <input id="roomEnd" type="number" min="1" placeholder="299" style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--line);">
+      </label>
+
+      <button id="addDeptBtn" class="action-btn" style="padding:11px 16px;">إضافة</button>
+    </div>
+  </div>
+
+  <div id="deptList" style="width:100%; max-width:640px;"></div>
+
+  <div id="deptEmpty" class="empty-state" style="display:none; max-width:640px; padding:30px 20px;">
+    لا توجد أقسام حالياً
+  </div>
+
+  <a href="admin.html" style="display:block; width:100%; max-width:640px; margin-top:16px; text-decoration:none;">
+    <button class="action-btn done-btn" style="width:100%;">العودة إلى لوحة الإدارة</button>
+  </a>
+</div>
+
+<script type="module" src="admin-departments.js"></script>
+
+</body>
+</html>
+

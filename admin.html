@@ -12,6 +12,10 @@
 
   <div class="admin-title">لوحة إحصائيات الإدارة</div>
 
+  <a href="admin-departments.html" style="display:inline-block; margin:8px 0 14px; text-decoration:none;">
+    <button class="action-btn">إدارة الأقسام</button>
+  </a>
+
   <div class="admin-subtitle">
     استدعاءات التمريض — الاستجابة وأوقاتها لكل قسم
   </div>
@@ -36,99 +40,79 @@
 
   <div id="content" style="display:none;">
 
-    <div class="stat-cards">
-
-      <div class="stat-card">
-        <div class="stat-value" id="statTotal">0</div>
-        <div class="stat-label">إجمالي الاستدعاءات</div>
+    <div id="callSummaryRow" class="dept-row" style="margin-bottom:14px;">
+      <div class="dept-row-top">
+        <span class="dept-row-name">إجمالي الاستدعاءات: <span id="statTotal">0</span></span>
+        <span class="dept-row-stats">متوسط وقت الاستجابة: <span id="statAvgTime">--</span></span>
       </div>
+      <div class="dept-row-hint">اضغط لعرض إجمالي الاستدعاءات حسب الأقسام</div>
+      <div id="callSummaryDetail" class="dept-detail">
+        <div id="deptBreakdown"></div>
 
-      <div class="stat-card">
-        <div class="stat-value" id="statDone">0</div>
-        <div class="stat-label">تم تنفيذها</div>
+        <div id="callBreakdownEmpty" class="empty-state" style="display:none;">
+          لا توجد استدعاءات في هذه الفترة
+        </div>
       </div>
-
-      <div class="stat-card">
-        <div class="stat-value" id="statPending">0</div>
-        <div class="stat-label">لم تُستلم بعد</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-value" id="statAvgTime">--</div>
-        <div class="stat-label">متوسط وقت الاستجابة</div>
-      </div>
-
     </div>
 
     <div class="section-title">
       إحصائيات الكافتيريا
     </div>
 
-    <div class="stat-cards">
-
-      <div class="stat-card">
-        <div class="stat-value" id="cafeStatTotal">0</div>
-        <div class="stat-label">إجمالي طلبات الكافتيريا</div>
+    <div id="cafeSummaryRow" class="dept-row" style="margin-bottom:14px;">
+      <div class="dept-row-top">
+        <span class="dept-row-name">طلبات اليوم: <span id="cafeStatTotal">0</span></span>
+        <span class="dept-row-stats">إيراد الطلبات: <span id="cafeStatRevenue">0.00 ل.س</span></span>
       </div>
+      <div class="dept-row-hint">اضغط لعرض إجمالي طلبات الكافتيريا حسب الغرف</div>
+      <div id="cafeSummaryDetail" class="dept-detail">
+        <div id="cafeRoomBreakdown"></div>
 
-      <div class="stat-card">
-        <div class="stat-value" id="cafeStatNew">0</div>
-        <div class="stat-label">طلبات جديدة</div>
+        <div id="cafeRoomsEmpty" class="empty-state" style="display:none;">
+          لا توجد طلبات كافتيريا اليوم
+        </div>
       </div>
-
-      <div class="stat-card">
-        <div class="stat-value" id="cafeStatPreparing">0</div>
-        <div class="stat-label">قيد التحضير</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-value" id="cafeStatDone">0</div>
-        <div class="stat-label">تم التسليم</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-value" id="cafeStatRevenue">0.00 ل.س</div>
-        <div class="stat-label">إيراد الطلبات المسلّمة</div>
-      </div>
-
     </div>
 
-    <div class="section-title">
-      الاستجابة حسب القسم
+
+    <div id="commentsSummaryRow" class="dept-row" style="margin-top:6px; margin-bottom:14px;">
+      <div class="dept-row-top">
+        <span class="dept-row-name">ملاحظات الممرضات</span>
+        <span class="dept-row-stats">المجموع: <span id="commentsCount" class="summary-count-big">0</span></span>
+      </div>
+      <div class="dept-row-hint">اضغط لعرض قائمة الملاحظات</div>
+      <div id="commentsDetail" class="dept-detail">
+        <div id="commentsList"></div>
+
+        <div
+          id="commentsEmpty"
+          class="empty-state"
+          style="display:none;">
+
+          لا توجد ملاحظات مسجّلة بهذه الفترة
+
+        </div>
+      </div>
     </div>
 
-    <div id="deptBreakdown"></div>
+    <div id="feedbackSummaryRow" class="dept-row" style="margin-top:6px; margin-bottom:14px;">
+      <div class="dept-row-top">
+        <span class="dept-row-name">الشكاوى والاقتراحات</span>
+        <span class="dept-row-stats">المجموع: <span id="feedbackCount" class="summary-count-big">0</span></span>
+      </div>
+      <div class="dept-row-hint">اضغط لعرض القائمة</div>
+      <div id="feedbackDetail" class="dept-detail">
+        <div id="feedbackList"></div>
 
-    <div class="section-title">
-      ملاحظات الممرضات على الطلبات
-    </div>
+        <div
+          id="feedbackEmpty"
+          class="empty-state"
+          style="display:none;">
 
-    <div id="commentsList"></div>
+          لا توجد شكاوى أو اقتراحات حالياً
 
-    <div
-      id="commentsEmpty"
-      class="empty-state"
-      style="display:none;">
-
-      لا توجد ملاحظات مسجّلة بهذه الفترة
-
-    </div>
-
-    <!-- الشكاوى والاقتراحات -->
-
-    <div class="section-title">
-      الشكاوى والاقتراحات
-    </div>
-
-    <div id="feedbackList"></div>
-
-    <div
-      id="feedbackEmpty"
-      class="empty-state"
-      style="display:none;">
-
-      لا توجد شكاوى أو اقتراحات حالياً
-
+        </div>
+      </div>
     </div>
 
   </div>

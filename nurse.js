@@ -3,7 +3,7 @@ import {
   collection, query, where, orderBy, onSnapshot,
   doc, runTransaction, updateDoc, serverTimestamp, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
-import { departmentName } from "./departments.js";
+import { departmentName, refreshDepartments } from "./departments.js";
 import { registerFCM } from "./fcm-helper.js";
 
 const loginCard = document.getElementById("loginCard");
@@ -192,7 +192,16 @@ if (Notification && Notification.permission === "granted") {
   notifyBtn.textContent = "الإشعارات مفعّلة ✓";
   notifyBtn.disabled = true;
 }
- 
+
+refreshDepartments().then(() => {
+  if (myDept) {
+    loginTitle.textContent = `تسجيل الدخول — قسم ${departmentName(myDept)}`;
+    if (nurseDeptEl) {
+      nurseDeptEl.textContent = `قسم ${departmentName(myDept)}`;
+    }
+  }
+});
+
 // -------- تسجيل الدخول --------
 if (myName && myDept) {
   showDashboard();
