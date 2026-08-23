@@ -5,6 +5,80 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>نظام الاستدعاء في مشفى الحوراني</title>
 <link rel="stylesheet" href="style.css">
+<style>
+  .demo-header {
+    margin-bottom: 24px;
+    text-align: center;
+  }
+
+  .demo-section {
+    width: 100%;
+    max-width: 480px;
+    margin-bottom: 20px;
+  }
+
+  .section-label {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--teal-dark);
+    margin-bottom: 10px;
+    text-align: right;
+  }
+
+  .demo-buttons-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .demo-btn {
+    display: block;
+    text-decoration: none;
+  }
+
+  .demo-btn button {
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 10px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #fff;
+    background: var(--teal);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+
+  .demo-btn button:active {
+    transform: scale(0.95);
+  }
+
+  .full-width-btn {
+    width: 100%;
+    display: block;
+    margin-bottom: 10px;
+    text-decoration: none;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--line);
+    margin: 20px 0;
+  }
+
+  .info-box {
+    background: #EAF2E9;
+    border: 1px solid var(--teal);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 0.85rem;
+    color: var(--teal-dark);
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+</style>
 </head>
 <body>
 
@@ -13,29 +87,137 @@
 </div>
 
 <div class="card" style="text-align:center;">
-  <h1>نظام الاستدعاء في مشفى الحوراني</h1>
-  <p class="subtitle">هذه صفحة رئيسية مؤقتة لتجربة النظام. روابط QR الفعلية للغرف والأقسام تُبنى مباشرة، وما في داعٍ لهذه الصفحة بالاستخدام الحقيقي.</p>
 
-  <a href="patient.html?room=201" style="display:block; margin-bottom:14px; text-decoration:none;">
-    <button class="action-btn done-btn" style="width:100%; padding:16px;">تجربة صفحة الغرفة 201 في قسم الباطنية</button>
-  </a>
+  <div class="demo-header">
+    <h1>نظام الاستدعاء 🏥</h1>
+    <p class="subtitle">صفحة تجربة النظام الكاملة مع جميع الأقسام والغرف</p>
+  </div>
 
-  <a href="patient.html?room=202" style="display:block; margin-bottom:14px; text-decoration:none;">
-    <button class="action-btn done-btn" style="width:100%; padding:16px;">تجربة صفحة الغرفة 202 في قسم الباطنية</button>
-  </a>
+  <div class="info-box">
+    💡 اختر الدور الذي تريد اختباره: مريض، ممرضة، كافتيريا، أو إدارة
+  </div>
 
-  <a href="nurse.html?dept=internal" style="display:block; margin-bottom:14px; text-decoration:none;">
-    <button class="action-btn" style="width:100%; padding:16px;">تجربة صفحة الممرضة (قسم الباطنية)</button>
-  </a>
+  <!-- ===== تجربة دور المريض ===== -->
+  <div class="demo-section">
+    <div class="section-label">👥 تجربة دور المريض</div>
 
-  <a href="cafeteria.html" style="display:block; margin-bottom:14px; text-decoration:none;">
-    <button class="action-btn" style="width:100%; padding:16px; background:#8b5e3c;">لوحة الكافتيريا</button>
-  </a>
+    <!-- قثطرة -->
+    <div style="margin-bottom: 14px;">
+      <div style="font-size: 0.8rem; color: var(--muted); margin-bottom: 6px;">قثطرة (200-299)</div>
+      <div class="demo-buttons-grid">
+        <a href="patient.html?room=201" class="demo-btn">
+          <button>الغرفة 201</button>
+        </a>
+        <a href="patient.html?room=202" class="demo-btn">
+          <button>الغرفة 202</button>
+        </a>
+        <a href="patient.html?room=250" class="demo-btn">
+          <button>الغرفة 250</button>
+        </a>
+        <a href="patient.html?room=299" class="demo-btn">
+          <button>الغرفة 299</button>
+        </a>
+      </div>
+    </div>
 
-  <a href="admin.html" style="display:block; text-decoration:none;">
-    <button class="action-btn" style="width:100%; padding:16px; background: var(--teal-dark);">لوحة الإدارة</button>
-  </a>
+    <!-- النسائية -->
+    <div style="margin-bottom: 14px;">
+      <div style="font-size: 0.8rem; color: var(--muted); margin-bottom: 6px;">النسائية (300-399)</div>
+      <div class="demo-buttons-grid">
+        <a href="patient.html?room=301" class="demo-btn">
+          <button>الغرفة 301</button>
+        </a>
+        <a href="patient.html?room=302" class="demo-btn">
+          <button>الغرفة 302</button>
+        </a>
+        <a href="patient.html?room=350" class="demo-btn">
+          <button>الغرفة 350</button>
+        </a>
+        <a href="patient.html?room=399" class="demo-btn">
+          <button>الغرفة 399</button>
+        </a>
+      </div>
+    </div>
+
+    <!-- الخمسميات -->
+    <div style="margin-bottom: 14px;">
+      <div style="font-size: 0.8rem; color: var(--muted); margin-bottom: 6px;">الخمسميات (500-599)</div>
+      <div class="demo-buttons-grid">
+        <a href="patient.html?room=501" class="demo-btn">
+          <button>الغرفة 501</button>
+        </a>
+        <a href="patient.html?room=502" class="demo-btn">
+          <button>الغرفة 502</button>
+        </a>
+        <a href="patient.html?room=550" class="demo-btn">
+          <button>الغرفة 550</button>
+        </a>
+        <a href="patient.html?room=599" class="demo-btn">
+          <button>الغرفة 599</button>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ===== تجربة دور الممرضة ===== -->
+  <div class="demo-section">
+    <div class="section-label">👩‍⚕️ تجربة دور الممرضة</div>
+    <a href="nurse.html?dept=dept-1787485105394" class="full-width-btn">
+      <button class="action-btn" style="width:100%; padding:12px;">قثطرة (200-299)</button>
+    </a>
+    <a href="nurse.html?dept=dept-1787470659022" class="full-width-btn">
+      <button class="action-btn" style="width:100%; padding:12px;">النسائية (300-399)</button>
+    </a>
+    <a href="nurse.html?dept=dept-1787486243729" class="full-width-btn">
+      <button class="action-btn" style="width:100%; padding:12px;">الخمسميات (500-599)</button>
+    </a>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ===== تجربة خدمات الكافتيريا ===== -->
+  <div class="demo-section">
+    <div class="section-label">🍽️ خدمات الكافتيريا</div>
+    <a href="cafeteria.html" class="full-width-btn">
+      <button class="action-btn" style="width:100%; padding:12px; background:#8b5e3c;">لوحة الكافتيريا (الاستقبال)</button>
+    </a>
+    <a href="cafeteria-products.html" class="full-width-btn">
+      <button class="action-btn" style="width:100%; padding:12px; background:#8b5e3c;">إدارة المنتجات</button>
+    </a>
+    <a href="cafeteria-order.html?room=301" class="full-width-btn">
+      <button class="action-btn" style="width:100%; padding:12px; background:#8b5e3c;">طلب من الغرفة 301</button>
+    </a>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ===== تجربة الإدارة ===== -->
+  <div class="demo-section">
+    <div class="section-label">📊 لوحة الإدارة</div>
+    <a href="admin.html" class="full-width-btn">
+      <button class="action-btn" style="width:100%; padding:12px; background:var(--teal-dark);">إحصائيات الاستدعاءات</button>
+    </a>
+    <a href="admin-departments.html" class="full-width-btn">
+      <button class="action-btn" style="width:100%; padding:12px; background:var(--teal-dark);">إدارة الأقسام والغرف</button>
+    </a>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ===== ملاحظات ===== -->
+  <div style="text-align: right; font-size: 0.85rem; color: var(--muted); margin-top: 16px;">
+    <strong>📝 ملاحظات التجربة:</strong><br>
+    • اختر رقم غرفة لتجربة استدعاء الممرضة<br>
+    • جميع البيانات مُخزّنة محلياً (Local Storage)<br>
+    • يمكنك تجربة النظام بأدوار مختلفة<br>
+    • الإشعارات تعمل على المتصفحات الحديثة
+  </div>
+
 </div>
 
 </body>
 </html>
+
+
