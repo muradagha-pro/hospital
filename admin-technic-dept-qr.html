@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>admin-technic department QR</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.dept-print-name {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--teal-dark);
+  text-align: center;
+}
+
+@media print {
+  @page { margin: 12mm; }
+
+  body {
+    background: #fff;
+    padding: 0;
+    min-height: auto;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  #printArea,
+  #printArea * {
+    visibility: visible !important;
+  }
+
+  #printArea {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  #qrPrintWrap {
+    border-color: #ddd !important;
+    box-shadow: none !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="logo">
+  <img src="alhourani.jpeg" alt="Al-Hourani Hospital Logo">
+</div>
+
+<div class="card" style="max-width:640px; text-align:center;">
+  <h1>QR القسم</h1>
+  <p class="subtitle" id="statusText">جار تجهيز رمز القسم...</p>
+
+  <div id="printArea">
+    <p id="deptNameText" class="dept-print-name"></p>
+
+    <div id="qrPrintWrap" style="position:relative; width:320px; height:320px; background:#fff; border:1px solid var(--line); border-radius:16px; padding:14px;">
+      <div id="qrCode" style="width:100%; height:100%;"></div>
+      <img
+        src="alhourani.jpeg"
+        alt="Hospital Logo"
+        style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:56px; height:56px; border-radius:10px; background:#fff; padding:5px; border:1px solid var(--line);"
+      >
+    </div>
+  </div>
+
+  <div style="margin-top:14px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+    <button id="printBtn" class="action-btn done-btn" style="min-width:140px;">طباعة</button>
+    <button id="openLinkBtn" class="action-btn" style="min-width:140px;">فتح رابط القسم</button>
+  </div>
+
+  <a href="admin-technic.html" style="display:block; margin-top:14px; text-decoration:none;">
+    <button class="action-btn note-finish-btn" style="width:100%;">العودة إلى admin-technic</button>
+  </a>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script type="module" src="admin-technic-dept-qr.js"></script>
+
+</body>
+</html>
+

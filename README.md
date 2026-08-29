@@ -71,7 +71,7 @@ Open **[README_EN.md](README_EN.md)** for complete setup instructions and detail
 | Patient Room | `patient.html?room=XXX` | Patient call request |
 | Nurse Station | `nurse.html?dept=XXX` | Manage incoming requests |
 | Admin Dashboard | `admin.html` | View analytics & statistics |
-| Department Admin | `admin-departments.html` | Configure departments |
+| Department Admin | `admin-technic.html` | Configure departments |
 | Cafeteria Products | `cafeteria-products.html` | Manage menu items |
 | Cafeteria Order | `cafeteria-order.html?room=XXX` | Patient ordering interface |
 | Cafeteria Status | `cafeteria-order-status.html` | Order tracking |
@@ -85,7 +85,7 @@ Open **[README_EN.md](README_EN.md)** for complete setup instructions and detail
 | غرفة المريض | `patient.html?room=XXX` | طلب استدعاء الممرضة |
 | محطة التمريض | `nurse.html?dept=XXX` | إدارة الطلبات الواردة |
 | لوحة الإدارة | `admin.html` | عرض التحليلات والإحصائيات |
-| إدارة الأقسام | `admin-departments.html` | تكوين الأقسام |
+| إدارة الأقسام | `admin-technic.html` | تكوين الأقسام |
 | منتجات الكافتيريا | `cafeteria-products.html` | إدارة القائمة |
 | طلب الكافتيريا | `cafeteria-order.html?room=XXX` | واجهة طلب المريض |
 | حالة الطلب | `cafeteria-order-status.html` | تتبع الطلب |

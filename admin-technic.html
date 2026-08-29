@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>مدير تقني</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="logo">
+  <img src="alhourani.jpeg" alt="Al-Hourani Hospital Logo">
+</div>
+
+<div id="technicLoginCard" class="login-card" style="width:100%; max-width:420px; margin-top:80px; text-align:right;">
+  <h1 style="margin:0 0 8px;">مدير تقني</h1>
+  <p class="subtitle" style="margin:0 0 16px;">تسجيل دخول فني</p>
+
+  <label for="technicUsername" class="label" style="display:block; margin-bottom:6px;">اسم المستخدم</label>
+  <input id="technicUsername" type="text" placeholder="Username" style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--line); margin:0 0 10px; text-align:left; direction:ltr;">
+
+  <label for="technicPassword" class="label" style="display:block; margin-bottom:6px;">كلمة المرور</label>
+  <input id="technicPassword" type="password" placeholder="Password" style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--line); margin:0 0 10px; text-align:left; direction:ltr;">
+
+  <button id="technicLoginBtn" class="action-btn done-btn" style="width:100%;">دخول</button>
+  <div id="technicLoginError" class="request-meta" style="margin-top:8px; color:#b73535; display:none;">بيانات الدخول غير صحيحة</div>
+</div>
+
+<div id="technicContent" class="card" style="display:none;">
+  <h1>مدير تقني</h1>
+  <p class="subtitle">admin-technic configuration for departments and their room ranges.</p>
+
+  <div class="login-card" style="width:100%; max-width:640px; margin: 8px 0 18px;">
+    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+      <label style="flex:2; min-width:190px;">
+        <span class="label" style="display:block; margin-bottom:6px;">اسم القسم</span>
+        <input id="deptName" type="text" placeholder="مثال: الباطنية" style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--line);">
+      </label>
+
+      <label style="flex:1; min-width:130px;">
+        <span class="label" style="display:block; margin-bottom:6px;">رمز القسم</span>
+        <input id="deptId" type="text" placeholder="internal" style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--line);">
+      </label>
+
+      <label style="flex:1; min-width:120px;">
+        <span class="label" style="display:block; margin-bottom:6px;">من غرفة</span>
+        <input id="roomStart" type="number" min="1" placeholder="201" style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--line);">
+      </label>
+
+      <label style="flex:1; min-width:120px;">
+        <span class="label" style="display:block; margin-bottom:6px;">إلى غرفة</span>
+        <input id="roomEnd" type="number" min="1" placeholder="299" style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--line);">
+      </label>
+
+      <button id="addDeptBtn" class="action-btn" style="padding:11px 16px;">إضافة</button>
+    </div>
+  </div>
+
+  <div class="login-card" style="width:100%; max-width:640px; margin: 0 0 18px; text-align:right;">
+    <div class="label" style="display:block; margin-bottom:6px;">رابط النظام (Domain)</div>
+    <input
+      id="qrDomain"
+      type="text"
+      value="https://al-hourani.netlify.app/"
+      placeholder="مثال: https://alhourani.netlify.app"
+      style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--line); margin:0 0 10px; text-align:left; direction:ltr;"
+    >
+    <div class="label" style="display:block; margin-bottom:6px;">رقم الغرفة</div>
+    <input
+      id="qrRoom"
+      type="number"
+      min="1"
+      placeholder="مثال: 301"
+      style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--line); margin:0 0 10px; text-align:left; direction:ltr;"
+    >
+    <button id="generateQrPageBtn" class="action-btn done-btn" style="width:100%;">
+      إنشاء QR للغرفة
+    </button>
+    <div class="request-meta" style="margin-top:8px;">
+      أدخل الرابط ورقم الغرفة لإنشاء QR مباشر لصفحة المريض مع شعار المستشفى في المنتصف.
+    </div>
+  </div>
+
+  <div id="deptList" style="width:100%; max-width:640px;"></div>
+
+  <div id="deptEmpty" class="empty-state" style="display:none; max-width:640px; padding:30px 20px;">
+    لا توجد أقسام حالياً
+  </div>
+
+  <a href="admin.html" style="display:block; width:100%; max-width:640px; margin-top:16px; text-decoration:none;">
+    <button class="action-btn done-btn" style="width:100%;">العودة إلى لوحة الإدارة</button>
+  </a>
+</div>
+
+<script type="module" src="admin-technic-auth.js"></script>
+
+</body>
+</html>
+
+

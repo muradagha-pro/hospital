@@ -18,6 +18,7 @@ const roomEnd = document.getElementById("roomEnd");
 const addDeptBtn = document.getElementById("addDeptBtn");
 const deptList = document.getElementById("deptList");
 const deptEmpty = document.getElementById("deptEmpty");
+const qrDomainInput = document.getElementById("qrDomain");
 
 let currentRows = [];
 let editingDocId = null;
@@ -135,10 +136,13 @@ function renderDepartments(rows) {
     card.className = "request-card";
     card.style.marginBottom = "10px";
 
+    const departmentPath = buildDepartmentPath(row.id);
+
     card.innerHTML = `
       <div>
         <div class="request-room">${escapeHtml(row.name || "")}</div>
         <div class="request-meta">رمز القسم: ${escapeHtml(String(row.id || ""))}</div>
+        <div class="request-meta">رابط القسم: <a href="${escapeHtml(departmentPath)}" target="_blank" rel="noopener noreferrer">${escapeHtml(departmentPath)}</a></div>
         <div class="request-meta">الغرف: ${Number(row.roomStart)} - ${Number(row.roomEnd)}</div>
       </div>
     `;
@@ -157,7 +161,13 @@ function renderDepartments(rows) {
         renderDepartments(currentRows);
       };
 
+      const qrBtn = document.createElement("button");
+      qrBtn.className = "action-btn done-btn";
+      qrBtn.textContent = "QR القسم";
+      qrBtn.onclick = () => openDepartmentQrPage(row);
+
       actions.appendChild(editBtn);
+      actions.appendChild(qrBtn);
       card.appendChild(actions);
     }
 
@@ -303,5 +313,38 @@ function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str;
   return div.innerHTML;
+}
+
+function openDepartmentQrPage(row) {
+  const normalizedDomain = normalizeDomain(qrDomainInput ? qrDomainInput.value : "");
+  if (!normalizedDomain) {
+    alert("يرجى إدخال رابط النظام الصحيح في حقل الدومين أولا");
+    return;
+  }
+
+  const targetUrl = `admin-technic-dept-qr.html?domain=${encodeURIComponent(normalizedDomain)}&deptId=${encodeURIComponent(String(row.id || ""))}&deptName=${encodeURIComponent(String(row.name || ""))}`;
+  const popup = window.open(targetUrl, "_blank");
+  if (!popup) {
+    window.location.href = targetUrl;
+  }
+}
+
+function buildDepartmentPath(deptId) {
+  return `nurse.html?dept=${encodeURIComponent(String(deptId || ""))}`;
+}
+
+function normalizeDomain(value) {
+  const trimmed = String(value || "").trim();
+  if (!trimmed) return "";
+
+  const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+
+  try {
+    const parsed = new URL(withProtocol);
+    if (!parsed.hostname) return "";
+    return `${parsed.origin}/`;
+  } catch {
+    return "";
+  }
 }
 

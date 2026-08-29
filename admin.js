@@ -45,6 +45,7 @@ const feedbackEmptyDefaultText = feedbackEmpty ? feedbackEmpty.textContent.trim(
 
 let callsUnsubscribe = null;
 let cafeUnsubscribe = null;
+let feedbackUnsubscribe = null;
 let currentRange = "today";
 let latestRequests = [];
 let latestCafeOrders = [];
@@ -87,7 +88,6 @@ initAdminPage();
 async function initAdminPage() {
   await refreshDepartments();
   setRange("today");
-  listenForFeedbacks();
 }
 
 function setRange(range) {
@@ -104,6 +104,7 @@ function setRange(range) {
 function loadData() {
   if (callsUnsubscribe) { callsUnsubscribe(); callsUnsubscribe = null; }
   if (cafeUnsubscribe) { cafeUnsubscribe(); cafeUnsubscribe = null; }
+  if (feedbackUnsubscribe) { feedbackUnsubscribe(); feedbackUnsubscribe = null; }
 
   loadingMsg.style.display = "block";
   content.style.display = "none";
@@ -125,6 +126,7 @@ function loadData() {
   });
 
   loadCafeteriaData(startTimestamp, endTimestamp);
+  listenForFeedbacks(startTimestamp, endTimestamp);
 }
 
 function getSelectedRange() {
@@ -537,13 +539,10 @@ function renderCafeteriaByRoom(orders) {
     });
 }
 
-function listenForFeedbacks() {
-  const q = query(
-    collection(db, "feedbacks"),
-    orderBy("createdAt", "desc")
-  );
+function listenForFeedbacks(startTimestamp, endTimestamp) {
+  const q = buildRangeQuery("feedbacks", startTimestamp, endTimestamp);
 
-  onSnapshot(q, (snapshot) => {
+  feedbackUnsubscribe = onSnapshot(q, (snapshot) => {
     feedbackList.innerHTML = "";
     feedbackCount.textContent = String(snapshot.size);
 

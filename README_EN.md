@@ -99,7 +99,7 @@ Departments are automatically determined by room number ranges (configured in `d
 
 ---
 
-### 5. **Department Management Page** (`admin-departments.html`)
+### 5. **Department Management Page** (`admin-technic.html`)
 
 **Purpose:** Configure hospital departments and room assignments
 
@@ -210,7 +210,7 @@ Departments are automatically determined by room number ranges (configured in `d
 - Deploy hosting to Netlify or Firebase Hosting
 
 ### Step 2: Configure Departments
-- Visit `admin-departments.html` to customize departments
+- Visit `admin-technic.html` to customize departments
 - Or use default departments from `departments.js`:
   - Emergency: 101–199
   - Internal Medicine: 201–299
