@@ -325,9 +325,14 @@ function listenForRequests() {
 }
 
 function setBlinking(isActive) {
-  document.body.classList.remove("incoming-blink", "incoming-blink-soft", "incoming-blink-strong");
+  document.body.classList.remove("incoming-blink", "incoming-blink-strong");
+  requestList.classList.remove("incoming-blink-soft");
   if (!isActive) return;
-  document.body.classList.add(blinkMode === "soft" ? "incoming-blink-soft" : "incoming-blink-strong");
+  if (blinkMode === "soft") {
+    requestList.classList.add("incoming-blink-soft");
+    return;
+  }
+  document.body.classList.add("incoming-blink-strong");
 }
 
 function buildCard(id, data) {
