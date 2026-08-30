@@ -29,6 +29,7 @@ let blinkMode  = localStorage.getItem(BLINK_MODE_KEY) || "strong";
 let activeTab  = "current";
 let allOrders  = [];
 let knownOrderIds = new Set();
+let openDoneRoomKey = null;
 let audioCtx   = null;
 let audioUnlocked = false;
 let alarmTimer = null;
@@ -174,6 +175,7 @@ if (typeof Notification !== "undefined" && Notification.permission === "granted"
 // ─────────────────────────────────────────────
 tabCurrent.addEventListener("click", () => {
   activeTab = "current";
+  openDoneRoomKey = null;
   tabCurrent.classList.add("active");
   tabDone.classList.remove("active");
   renderOrders();
@@ -289,11 +291,11 @@ function renderDoneOrdersByRoom(doneOrders) {
         <span class="dept-row-name">غرفة ${escapeHtml(roomKey)}</span>
         <span class="dept-row-stats">${info.count} طلب · ${info.total.toFixed(2)} ل.س</span>
       </div>
-      <div class="dept-row-hint">اضغط لعرض إجمالي طلبات هذه الغرفة</div>
+      <div class="dept-row-hint">اضغط لعرض قائمة الطلبات المنتهية لهذه الغرفة</div>
     `;
 
     const detail = document.createElement("div");
-    detail.className = "dept-detail";
+    detail.className = "dept-detail" + (openDoneRoomKey === roomKey ? " open" : "");
 
     detail.innerHTML = `
       <div class="detail-item" style="margin-top:8px;">
@@ -304,12 +306,52 @@ function renderDoneOrdersByRoom(doneOrders) {
       </div>
     `;
 
+    const sortedOrders = [...info.orders].sort((a, b) => {
+      const ta = a.doneAt && typeof a.doneAt.toMillis === "function"
+        ? a.doneAt.toMillis()
+        : (a.createdAt && typeof a.createdAt.toMillis === "function" ? a.createdAt.toMillis() : 0);
+      const tb = b.doneAt && typeof b.doneAt.toMillis === "function"
+        ? b.doneAt.toMillis()
+        : (b.createdAt && typeof b.createdAt.toMillis === "function" ? b.createdAt.toMillis() : 0);
+      return tb - ta;
+    });
+
+    sortedOrders.forEach((order) => {
+      const doneTime = formatTime(order.doneAt);
+      const createdTime = formatTime(order.createdAt);
+      const itemSummary = Array.isArray(order.items) && order.items.length > 0
+        ? order.items.map((i) => `${escapeHtml(String(i?.name || ""))} x${Number.isFinite(Number(i?.qty)) ? Number(i.qty) : 1}`).join("، ")
+        : "--";
+
+      const item = document.createElement("div");
+      item.className = "detail-item";
+      item.style.marginTop = "8px";
+      item.innerHTML = `
+        <div class="detail-item-top">
+          <span class="badge done">تم التسليم</span>
+          <span class="detail-room">${doneTime}</span>
+        </div>
+        <div class="detail-times">
+          <span>وقت الطلب: ${createdTime}</span>
+          <span>${itemSummary}</span>
+          <span>الإجمالي: ${Number(order.total || 0).toFixed(2)} ل.س</span>
+        </div>
+        ${order.note ? `<div class="cafeteria-order-note" style="margin-top:8px;">${escapeHtml(order.note)}</div>` : ""}
+      `;
+      detail.appendChild(item);
+    });
+
     row.appendChild(detail);
     row.addEventListener("click", () => {
       const willOpen = !detail.classList.contains("open");
       document.querySelectorAll("#ordersList .dept-detail.open")
         .forEach((el) => el.classList.remove("open"));
-      if (willOpen) detail.classList.add("open");
+      if (willOpen) {
+        detail.classList.add("open");
+        openDoneRoomKey = roomKey;
+      } else {
+        openDoneRoomKey = null;
+      }
     });
 
     ordersList.appendChild(row);
