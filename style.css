@@ -54,7 +54,8 @@ body.incoming-blink {
   50% { background: #ffdede; }
 }
 
-.request-list.incoming-blink-soft {
+.request-list.incoming-blink-soft,
+#ordersList.incoming-blink-soft {
   border-radius: 16px;
   padding: 8px;
   animation: incomingBlinkSoft 0.85s ease-in-out infinite;
@@ -362,6 +363,41 @@ h1 {
   resize: vertical;
   font-family: inherit;
   font-size: 0.95rem;
+}
+
+.cafeteria-items-list {
+  display: grid;
+  gap: 6px;
+}
+
+.cafeteria-item-line {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--teal-dark);
+  line-height: 1.5;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.cafeteria-item-line:last-child {
+  border-bottom: none;
+}
+
+.cafeteria-item-qty {
+  color: #193f3b;
+  font-weight: 800;
+}
+
+.cafeteria-order-note {
+  font-size: 1.1rem;
+  line-height: 1.65;
+  color: #173a36;
+  background: #f3efe5;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-weight: 700;
+  white-space: pre-line;
 }
 
 .cafeteria-checkout-row {

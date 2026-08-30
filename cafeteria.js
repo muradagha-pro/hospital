@@ -19,10 +19,13 @@ const soundHint       = document.getElementById("soundHint");
 const notifyBtn       = document.getElementById("notifyBtn");
 const notifyBanner    = document.getElementById("notifyBanner");
 const alertModeSelect = document.getElementById("alertModeSelect");
+const blinkModeSelect = document.getElementById("blinkModeSelect");
 
 // ── state ──
 const ALERT_MODE_KEY = "cafeAlertMode";
+const BLINK_MODE_KEY = "cafeBlinkMode"; // "soft" | "strong"
 let alertMode  = localStorage.getItem(ALERT_MODE_KEY) || "full";
+let blinkMode  = localStorage.getItem(BLINK_MODE_KEY) || "strong";
 let activeTab  = "current";
 let allOrders  = [];
 let knownOrderIds = new Set();
@@ -36,6 +39,17 @@ alertModeSelect.addEventListener("change", () => {
   alertMode = alertModeSelect.value;
   localStorage.setItem(ALERT_MODE_KEY, alertMode);
 });
+
+if (blinkModeSelect) {
+  blinkModeSelect.value = blinkMode;
+  blinkModeSelect.addEventListener("change", () => {
+    blinkMode = blinkModeSelect.value === "soft" ? "soft" : "strong";
+    localStorage.setItem(BLINK_MODE_KEY, blinkMode);
+    if (document.body.classList.contains("incoming-blink-strong") || ordersList.classList.contains("incoming-blink-soft")) {
+      setBlinking(true);
+    }
+  });
+}
 
 // ─────────────────────────────────────────────
 // Wake Lock — يمنع الشاشة من النوم
@@ -118,6 +132,17 @@ function stopAlarm() {
   if ("vibrate" in navigator) navigator.vibrate(0);
 }
 
+function setBlinking(isActive) {
+  document.body.classList.remove("incoming-blink", "incoming-blink-strong");
+  ordersList.classList.remove("incoming-blink-soft");
+  if (!isActive) return;
+  if (blinkMode === "soft") {
+    ordersList.classList.add("incoming-blink-soft");
+    return;
+  }
+  document.body.classList.add("incoming-blink-strong");
+}
+
 // ─────────────────────────────────────────────
 // إشعارات المتصفح
 // ─────────────────────────────────────────────
@@ -182,12 +207,19 @@ function listenForOrders() {
 
     // alarm if any "new" orders still pending
     const pendingCount = allOrders.filter((o) => o.status === "new").length;
-    if (pendingCount > 0) startAlarm();
-    else stopAlarm();
+    if (pendingCount > 0) {
+      setBlinking(true);
+      startAlarm();
+    } else {
+      setBlinking(false);
+      stopAlarm();
+    }
 
     renderOrders();
   }, (err) => {
     console.error(err);
+    setBlinking(false);
+    stopAlarm();
     ordersList.innerHTML = "";
     ordersEmpty.style.display = "block";
     ordersEmpty.textContent = "تعذر تحميل الطلبات حالياً";
@@ -290,9 +322,13 @@ function buildOrderCard(order) {
   card.style.marginBottom = "10px";
 
   const createdAt    = formatTime(order.createdAt);
-  const itemSummary  = Array.isArray(order.items)
-    ? order.items.map((i) => `${i.name} x${i.qty}`).join("، ")
-    : "--";
+  const itemLines = Array.isArray(order.items) && order.items.length > 0
+    ? order.items.map((i) => {
+        const name = escapeHtml(String(i?.name || ""));
+        const qty = Number.isFinite(Number(i?.qty)) ? Number(i.qty) : 1;
+        return `<div class="cafeteria-item-line">${name} <span class="cafeteria-item-qty">x${qty}</span></div>`;
+      }).join("")
+    : `<div class="cafeteria-item-line">--</div>`;
 
   const badgeClass = order.status === "new" ? "sent"
     : order.status === "preparing" ? "received" : "done";
@@ -306,11 +342,13 @@ function buildOrderCard(order) {
         <span class="badge ${badgeClass}">${badgeText}</span>
         &nbsp;·&nbsp;${createdAt}
       </div>
-      <div class="request-meta" style="margin-top:6px;">${escapeHtml(itemSummary)}</div>
+      <div class="cafeteria-items-list" style="margin-top:8px;">
+        ${itemLines}
+      </div>
       <div class="request-meta" style="margin-top:4px; font-weight:700; color:var(--teal-dark);">
         الإجمالي: ${Number(order.total || 0).toFixed(2)} ل.س
       </div>
-      ${order.note ? `<div class="detail-note" style="margin-top:8px;">${escapeHtml(order.note)}</div>` : ""}
+      ${order.note ? `<div class="cafeteria-order-note" style="margin-top:10px;">${escapeHtml(order.note)}</div>` : ""}
     </div>
   `;
 
