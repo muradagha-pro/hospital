@@ -10,7 +10,6 @@ const loginCard = document.getElementById("loginCard");
 const loginTitle = document.getElementById("loginTitle");
 const loginSubtitle = document.getElementById("loginSubtitle");
 const nameInput = document.getElementById("nameInput");
-const loginBtn = document.getElementById("loginBtn");
 const nurseHeader = document.getElementById("nurseHeader");
 const nurseNameEl = document.getElementById("nurseName");
 const nurseDeptEl = document.getElementById("nurseDept");
@@ -18,6 +17,7 @@ const changeNameBtn = document.getElementById("changeNameBtn");
 const requestList = document.getElementById("requestList");
 const emptyState = document.getElementById("emptyState");
 const alertModeSelect = document.getElementById("alertModeSelect");
+const blinkModeSelect = document.getElementById("blinkModeSelect");
 const notifyBtn = document.getElementById("notifyBtn");
 const notifyBanner = document.getElementById("notifyBanner");
 const soundHint = document.getElementById("soundHint");
@@ -30,8 +30,10 @@ const logEmptyState = document.getElementById("logEmptyState");
 const NAME_KEY = "nurseName";
 const DEPT_KEY = "nurseDept";
 const ALERT_MODE_KEY = "nurseAlertMode"; // "full" | "vibrate" | "off"
- 
-let myName = localStorage.getItem(NAME_KEY);
+const BLINK_MODE_KEY = "nurseBlinkMode"; // "soft" | "strong"
+const DEFAULT_NURSE_NAME = "الممرضة المناوبة";
+
+let myName = localStorage.getItem(NAME_KEY) || DEFAULT_NURSE_NAME;
 
 // ── Wake Lock — يمنع الشاشة من النوم ──
 let wakeLock = null;
@@ -54,27 +56,30 @@ const deptFromUrl = urlParams.get("dept");
 let myDept = deptFromUrl || localStorage.getItem(DEPT_KEY) || "";
  
 let alertMode = localStorage.getItem(ALERT_MODE_KEY) || "full";
+let blinkMode = localStorage.getItem(BLINK_MODE_KEY) || "strong";
 let knownRequestIds = new Set();
 let logUnsubscribe = null;
 let currentUnsubscribe = null;
 let audioUnlocked = false;
  
 if (deptFromUrl) localStorage.setItem(DEPT_KEY, deptFromUrl);
- 
+if (!localStorage.getItem(NAME_KEY)) localStorage.setItem(NAME_KEY, myName);
+
 if (myDept) {
   loginTitle.textContent = `تسجيل الدخول — قسم ${departmentName(myDept)}`;
-  loginSubtitle.textContent = "أدخل اسمك للدخول";
-  nameInput.style.display = "block";
-  loginBtnVisible(true);
+  loginSubtitle.textContent = "جار فتح لوحة القسم...";
+  if (nameInput) nameInput.style.display = "none";
+  loginBtnVisible(false);
 } else {
   loginTitle.textContent = "لم يتم التعرف على القسم";
   loginSubtitle.textContent = "الرجاء مسح رمز QR الخاص بمحطة قسمك لتسجيل الدخول.";
-  nameInput.style.display = "none";
+  if (nameInput) nameInput.style.display = "none";
   loginBtnVisible(false);
 }
  
 function loginBtnVisible(visible) {
-  document.getElementById("loginBtn").style.display = visible ? "block" : "none";
+  const btn = document.getElementById("loginBtn");
+  if (btn) btn.style.display = visible ? "block" : "none";
 }
  
 // =====================================================================
@@ -170,7 +175,18 @@ alertModeSelect.addEventListener("change", () => {
   alertMode = alertModeSelect.value;
   localStorage.setItem(ALERT_MODE_KEY, alertMode);
 });
- 
+
+if (blinkModeSelect) {
+  blinkModeSelect.value = blinkMode;
+  blinkModeSelect.addEventListener("change", () => {
+    blinkMode = blinkModeSelect.value === "soft" ? "soft" : "strong";
+    localStorage.setItem(BLINK_MODE_KEY, blinkMode);
+    if (document.body.classList.contains("incoming-blink-soft") || document.body.classList.contains("incoming-blink-strong")) {
+      setBlinking(true);
+    }
+  });
+}
+
 // -------- إشعارات المتصفح (اختياري، لتوصيل التنبيه حتى لو التبويب مو أمامها) --------
 notifyBtn.addEventListener("click", async () => {
   if (!("Notification" in window)) {
@@ -196,29 +212,17 @@ if (Notification && Notification.permission === "granted") {
 refreshDepartments().then(() => {
   if (myDept) {
     loginTitle.textContent = `تسجيل الدخول — قسم ${departmentName(myDept)}`;
-    if (nurseDeptEl) {
-      nurseDeptEl.textContent = `قسم ${departmentName(myDept)}`;
-    }
+    if (nurseNameEl) nurseNameEl.textContent = `قسم ${departmentName(myDept)}`;
+    if (nurseDeptEl) nurseDeptEl.textContent = "";
   }
 });
 
 // -------- تسجيل الدخول --------
-if (myName && myDept) {
+if (myDept) {
   showDashboard();
 } else {
   showLogin();
 }
- 
-loginBtn.addEventListener("click", () => {
-  const val = nameInput.value.trim();
-  if (!val) { alert("الرجاء إدخال الاسم"); return; }
-  if (!myDept) { alert("الرجاء مسح رمز QR الخاص بقسمك أولاً"); return; }
- 
-  unlockAudio(); // فعّلي الصوت فوراً بنفس ضغطة الدخول، قبل عرض اللوحة
-  myName = val;
-  localStorage.setItem(NAME_KEY, myName);
-  showDashboard();
-});
  
 changeNameBtn.addEventListener("click", () => {
   localStorage.removeItem(NAME_KEY);
@@ -228,6 +232,7 @@ changeNameBtn.addEventListener("click", () => {
  
 function showLogin() {
   loginCard.style.display = "block";
+  setBlinking(false);
   nurseHeader.style.display = "none";
   tabs.style.display = "none";
   requestList.style.display = "none";
@@ -240,8 +245,10 @@ function showDashboard() {
   loginCard.style.display = "none";
   nurseHeader.style.display = "flex";
   tabs.style.display = "flex";
-  nurseNameEl.textContent = myName;
-  nurseDeptEl.textContent = `قسم ${departmentName(myDept)}`;
+  nurseNameEl.textContent = `قسم ${departmentName(myDept)}`;
+  nurseDeptEl.textContent = "";
+  nurseDeptEl.style.display = "none";
+  if (changeNameBtn) changeNameBtn.style.display = "none";
   if (!audioUnlocked) soundHint.style.display = "block";
 
   // تسجيل صامت فقط إذا كان الإذن ممنوحاً مسبقاً
@@ -289,6 +296,7 @@ function listenForRequests() {
  
     if (snapshot.empty) {
       emptyState.style.display = tabCurrent.classList.contains("active") ? "block" : "none";
+      setBlinking(false);
       stopAlarm();
       return;
     }
@@ -306,11 +314,22 @@ function listenForRequests() {
       knownRequestIds.add(docSnap.id);
     });
  
-    if (pendingCount > 0) startAlarm();
-    else stopAlarm();
+    if (pendingCount > 0) {
+      setBlinking(true);
+      startAlarm();
+    } else {
+      setBlinking(false);
+      stopAlarm();
+    }
   });
 }
- 
+
+function setBlinking(isActive) {
+  document.body.classList.remove("incoming-blink", "incoming-blink-soft", "incoming-blink-strong");
+  if (!isActive) return;
+  document.body.classList.add(blinkMode === "soft" ? "incoming-blink-soft" : "incoming-blink-strong");
+}
+
 function buildCard(id, data) {
   const card = document.createElement("div");
   card.className = "request-card" + (data.receivedBy === myName ? " mine" : "");

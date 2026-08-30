@@ -318,10 +318,8 @@ function renderStatus(data) {
       : "";
     callBtnText.textContent = "تم الإرسال";
   } else if (data.status === "received") {
-    statusLine.textContent = "الممرضة استلمت الطلب";
-    statusTime.textContent = data.receivedAt
-      ? `وقت الاستلام: ${formatTime(data.receivedAt)}`
-      : "";
+    statusLine.textContent = "الممرضة استلمت طلبك وهي في طريقها إليك";
+    statusTime.textContent = formatResponseTime(data.createdAt, data.receivedAt);
     callBtnText.textContent = "قيد التنفيذ";
   } else if (data.status === "done") {
     statusLine.textContent = "تم تنفيذ الطلب";
@@ -351,6 +349,27 @@ function formatTime(ts) {
         minute: "2-digit"
       })
     : "";
+}
+
+function formatResponseTime(createdAt, receivedAt) {
+  if (!createdAt || !receivedAt) return "";
+  if (typeof createdAt.toDate !== "function" || typeof receivedAt.toDate !== "function") return "";
+
+  const diffMs = receivedAt.toDate().getTime() - createdAt.toDate().getTime();
+  if (!Number.isFinite(diffMs) || diffMs < 0) return "";
+
+  const seconds = Math.round(diffMs / 1000);
+  if (seconds < 60) {
+    return `زمن الاستجابة: ${seconds} ثانية`;
+  }
+
+  const minutes = Math.floor(seconds / 60);
+  const remainSeconds = seconds % 60;
+  if (remainSeconds === 0) {
+    return `زمن الاستجابة: ${minutes} دقيقة`;
+  }
+
+  return `زمن الاستجابة: ${minutes} دقيقة و ${remainSeconds} ثانية`;
 }
 
 function scheduleAutoCancel(createdAt) {

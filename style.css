@@ -32,6 +32,35 @@ body {
   position: relative;
 }
 
+/* Nurse visual alert modes while unreceived requests exist. */
+body.incoming-blink-soft {
+  animation: incomingBlinkSoft 1.2s ease-in-out infinite;
+}
+
+body.incoming-blink-strong,
+body.incoming-blink {
+  animation: incomingBlinkStrong 0.85s ease-in-out infinite;
+}
+
+@keyframes incomingBlinkSoft {
+  0%, 100% { background: var(--bg); }
+  50% { background: #fff2f2; }
+}
+
+@keyframes incomingBlinkStrong {
+  0%, 100% { background: var(--bg); }
+  50% { background: #ffdede; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.incoming-blink-soft,
+  body.incoming-blink-strong,
+  body.incoming-blink {
+    animation: none;
+    background: #ffdede;
+  }
+}
+
 /* --- Logo styling --- */
 .logo {
   position: fixed;
